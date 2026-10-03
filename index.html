@@ -3,104 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zoo Game Firebase 通信テスト</title>
+<title>Zoo Game ルームテスト Ver.0.1</title>
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f4f6f8;color:#1f2937;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;padding:20px}
-.card{width:min(100%,560px);background:#fff;border-radius:20px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
-h1{margin:0 0 8px;font-size:clamp(24px,6vw,34px)}.sub{margin:0 0 22px;color:#6b7280;line-height:1.6}
-.status{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eef2f7;font-size:14px;margin-bottom:20px}
-.dot{width:10px;height:10px;border-radius:50%;background:#9ca3af}.dot.ok{background:#22c55e}.dot.ng{background:#ef4444}
-label{display:block;font-weight:700;margin-bottom:8px}.row{display:grid;grid-template-columns:1fr auto;gap:10px}
-input{width:100%;min-width:0;font-size:18px;padding:14px 15px;border-radius:12px;border:1px solid #d1d5db;outline:none}
-button{border:0;border-radius:12px;padding:0 18px;font-size:16px;font-weight:700;background:#111827;color:white;cursor:pointer}
-.result{margin-top:24px;padding:20px;border-radius:16px;background:#f8fafc;border:1px solid #e5e7eb}
-.result-title{font-size:13px;color:#6b7280;margin-bottom:6px}.shared-name{font-size:clamp(28px,8vw,46px);font-weight:800;min-height:1.2em;word-break:break-word}
-.time{margin-top:8px;font-size:12px;color:#9ca3af}.help{margin-top:20px;font-size:14px;line-height:1.7;color:#4b5563}.error{margin-top:14px;color:#b91c1c;font-size:14px;white-space:pre-wrap}
-@media(max-width:480px){.row{grid-template-columns:1fr}button{min-height:48px}}
+:root{--bg:#f3f5f7;--panel:#fff;--ink:#1f2937;--muted:#6b7280;--line:#dbe1e8;--accent:#111827;--ok:#16a34a;--warn:#d97706;--danger:#dc2626}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{width:min(100%,760px);margin:auto;padding:18px 14px 40px}h1{margin:8px 0 4px;font-size:clamp(26px,7vw,38px)}.sub{margin:0 0 18px;color:var(--muted);line-height:1.55}.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 8px 24px rgba(0,0,0,.05)}.grid{display:grid;gap:12px}.two{grid-template-columns:1fr 1fr}label{display:block;font-weight:700;margin:0 0 6px}input{width:100%;padding:13px 14px;font-size:17px;border:1px solid #cbd5e1;border-radius:12px;outline:none;background:#fff}input:focus{border-color:#334155}button{width:100%;border:0;border-radius:12px;min-height:48px;padding:11px 14px;font-size:16px;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)}button.warn{background:var(--warn)}button.danger{background:var(--danger)}button:disabled{opacity:.45;cursor:not-allowed}.room-head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.code{font-size:clamp(32px,11vw,54px);font-weight:900;letter-spacing:.12em;line-height:1}.badge{display:inline-flex;align-items:center;gap:7px;background:#eef2f7;border-radius:999px;padding:8px 11px;font-size:13px;font-weight:700}.dot{width:9px;height:9px;border-radius:50%;background:#9ca3af}.dot.ok{background:#22c55e}.players{display:grid;gap:9px;margin-top:12px}.player{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fafafa}.player-main{min-width:0}.player-name{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{color:var(--muted);font-size:13px;margin-top:3px}.ready{font-size:13px;font-weight:900;padding:7px 9px;border-radius:999px;background:#e5e7eb}.ready.yes{background:#dcfce7;color:#166534}.area{display:inline-block;margin-top:6px;padding:5px 8px;border-radius:9px;background:#eef2ff;font-size:13px;font-weight:800}.host-note{font-size:13px;color:#7c3aed;margin-left:6px}.error{color:#b91c1c;white-space:pre-wrap;font-size:14px;margin-top:10px}.success{color:#166534;font-size:14px;margin-top:10px}.hidden{display:none!important}.actions{display:grid;gap:10px;margin-top:12px}.phase{padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--line);font-size:14px}.footer-note{font-size:12px;color:#94a3b8;line-height:1.6;margin-top:14px}@media(max-width:560px){.two{grid-template-columns:1fr}.player{grid-template-columns:1fr auto}}
 </style>
 </head>
 <body>
-<main class="card">
-<h1>🦁 Zoo Game 通信テスト</h1>
-<p class="sub">別のスマホでもこのページを開き、片方で名前を送信すると、もう片方にも即時反映されれば成功です。</p>
-<div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Firebaseへ接続中…</span></div>
-<label for="nameInput">共有する名前</label>
-<div class="row">
-<input id="nameInput" type="text" maxlength="30" placeholder="例：ショウキ" autocomplete="off">
-<button id="sendBtn" type="button">送信</button>
+<div class="wrap">
+<h1>🦁 Zoo Game</h1>
+<p class="sub">ルーム作成・参加・エリア割当・READY同期テスト Ver.0.1</p>
+<section id="entryPanel" class="panel">
+<div class="grid">
+<div><label for="playerName">プレイヤー名</label><input id="playerName" maxlength="14" placeholder="例：ショウキ"></div>
+<div class="two grid"><button id="createRoomBtn">ルームを作る</button><div><label for="joinCode">ルームコード</label><input id="joinCode" maxlength="4" inputmode="text" autocapitalize="characters" placeholder="ABCD"></div></div>
+<button id="joinRoomBtn" class="secondary">ルームに参加する</button>
 </div>
-<section class="result">
-<div class="result-title">Firebaseに保存されている名前</div>
-<div id="sharedName" class="shared-name">―</div>
-<div id="updatedAt" class="time"></div>
+<div id="entryError" class="error"></div>
 </section>
-<div id="errorBox" class="error"></div>
-<div class="help"><strong>テスト方法：</strong><br>① このページを2台のスマホで開く<br>② 片方で名前を入力して「送信」<br>③ もう片方の表示も自動で変われば通信成功</div>
-</main>
-
+<section id="roomPanel" class="panel hidden">
+<div class="room-head"><div><div class="meta">ROOM CODE</div><div id="roomCodeView" class="code">----</div></div><div class="badge"><span id="connDot" class="dot"></span><span id="connText">接続中…</span></div></div>
+<div class="phase" style="margin-top:14px">現在の状態：<strong id="phaseText">ロビー</strong></div>
+<div style="margin-top:16px;font-weight:900">参加プレイヤー <span id="playerCount">0</span>/5</div>
+<div id="playersList" class="players"></div>
+<div class="actions"><button id="assignAreasBtn" class="warn hidden">エリアをランダム割当</button><button id="readyBtn" class="ok">READY</button><button id="resetReadyBtn" class="secondary hidden">READYを全解除</button><button id="leaveBtn" class="danger">ルームを退出</button></div>
+<div id="roomMsg" class="success"></div><div id="roomError" class="error"></div>
+<div class="footer-note">ホストだけがエリア割当とREADY全解除を操作できます。<br>エリアは参加人数分だけ「海・サバンナ・ジャングル・北極・都会」からランダムに割り当てます。</div>
+</section>
+</div>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDH6fRhs1Yt-4PYlomYk_HULe2mA0dp2Sc",
-  authDomain: "zoo-game-3a9d5.firebaseapp.com",
-  databaseURL: "https://zoo-game-3a9d5-default-rtdb.asia-southeast1.firebasedatabase.app/",
-  projectId: "zoo-game-3a9d5",
-  storageBucket: "zoo-game-3a9d5.firebasestorage.app",
-  messagingSenderId: "782185094322",
-  appId: "1:782185094322:web:3779ccd03a92c5feec3dab"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const testRef = ref(db, "connectionTest");
-
-const nameInput = document.getElementById("nameInput");
-const sendBtn = document.getElementById("sendBtn");
-const sharedName = document.getElementById("sharedName");
-const updatedAt = document.getElementById("updatedAt");
-const statusDot = document.getElementById("statusDot");
-const statusText = document.getElementById("statusText");
-const errorBox = document.getElementById("errorBox");
-
-function setStatus(ok,text){
-  statusDot.className="dot "+(ok?"ok":"ng");
-  statusText.textContent=text;
-}
-
-async function sendName(){
-  const name=nameInput.value.trim();
-  if(!name){alert("名前を入力してください。");return;}
-  sendBtn.disabled=true; errorBox.textContent="";
-  try{
-    await set(testRef,{sharedName:name,updatedAt:new Date().toISOString()});
-    nameInput.select();
-  }catch(err){
-    setStatus(false,"書き込みエラー");
-    errorBox.textContent="Firebaseへの書き込みに失敗しました。\n"+err.message;
-  }finally{
-    sendBtn.disabled=false;
-  }
-}
-
-sendBtn.addEventListener("click",sendName);
-nameInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendName();});
-
-onValue(testRef,snapshot=>{
-  const data=snapshot.val();
-  setStatus(true,"Firebase接続OK");
-  if(!data){
-    sharedName.textContent="まだデータなし";
-    updatedAt.textContent="";
-    return;
-  }
-  sharedName.textContent=data.sharedName??"―";
-  updatedAt.textContent=data.updatedAt ? "更新："+new Date(data.updatedAt).toLocaleString("ja-JP") : "";
-},error=>{
-  setStatus(false,"読み込みエラー");
-  errorBox.textContent="Firebaseから読み込めませんでした。\n"+error.message;
-});
+import { getDatabase, ref, get, set, update, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+const firebaseConfig={apiKey:"AIzaSyDH6fRhs1Yt-4PYlomYk_HULe2mA0dp2Sc",authDomain:"zoo-game-3a9d5.firebaseapp.com",databaseURL:"https://zoo-game-3a9d5-default-rtdb.asia-southeast1.firebasedatabase.app/",projectId:"zoo-game-3a9d5",storageBucket:"zoo-game-3a9d5.firebasestorage.app",messagingSenderId:"782185094322",appId:"1:782185094322:web:3779ccd03a92c5feec3dab"};
+const app=initializeApp(firebaseConfig);const db=getDatabase(app);
+const AREAS=[{id:"sea",label:"🌊 海"},{id:"savanna",label:"🦁 サバンナ"},{id:"jungle",label:"🌿 ジャングル"},{id:"polar",label:"❄️ 北極"},{id:"city",label:"🏙️ 都会"}];
+const $=id=>document.getElementById(id);const state={roomCode:null,playerId:null,isHost:false,roomUnsub:null,roomData:null};
+function makePlayerId(){return crypto?.randomUUID?crypto.randomUUID():"p_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,10)}
+function randomRoomCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let out="";for(let i=0;i<4;i++)out+=chars[Math.floor(Math.random()*chars.length)];return out}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function cleanName(){return $("playerName").value.trim().slice(0,14)}
+function setEntryError(msg=""){$("entryError").textContent=msg}function setRoomError(msg=""){$("roomError").textContent=msg}function setRoomMsg(msg=""){$("roomMsg").textContent=msg}
+function showRoom(){$("entryPanel").classList.add("hidden");$("roomPanel").classList.remove("hidden");$("roomCodeView").textContent=state.roomCode}function showEntry(){$("roomPanel").classList.add("hidden");$("entryPanel").classList.remove("hidden")}
+async function createUniqueRoom(){for(let n=0;n<10;n++){const code=randomRoomCode();const snap=await get(ref(db,`rooms/${code}`));if(!snap.exists())return code}throw new Error("ルームコードを作成できませんでした。もう一度試してください。")}
+async function createRoom(){setEntryError("");const name=cleanName();if(!name){setEntryError("プレイヤー名を入力してください。");return}$("createRoomBtn").disabled=true;try{const code=await createUniqueRoom();const playerId=makePlayerId();const now=Date.now();await set(ref(db,`rooms/${code}`),{roomCode:code,status:"waiting",phase:"lobby",createdAt:now,hostPlayerId:playerId,rulesVersion:"0.1",players:{[playerId]:{name,joinedAt:now,connected:true,ready:false,area:null}}});state.roomCode=code;state.playerId=playerId;state.isHost=true;localStorage.setItem("zoo_room",code);localStorage.setItem("zoo_player",playerId);localStorage.setItem("zoo_name",name);showRoom();attachRoomListener();setupPresence()}catch(e){setEntryError(e.message)}finally{$("createRoomBtn").disabled=false}}
+async function joinRoom(){setEntryError("");const name=cleanName();const code=$("joinCode").value.trim().toUpperCase();if(!name){setEntryError("プレイヤー名を入力してください。");return}if(code.length!==4){setEntryError("4文字のルームコードを入力してください。");return}$("joinRoomBtn").disabled=true;try{const roomRef=ref(db,`rooms/${code}`);const snap=await get(roomRef);if(!snap.exists())throw new Error("そのルームは見つかりません。");const room=snap.val();const players=room.players?Object.keys(room.players):[];if(players.length>=5)throw new Error("このルームは5人で満員です。");const playerId=makePlayerId();await set(ref(db,`rooms/${code}/players/${playerId}`),{name,joinedAt:Date.now(),connected:true,ready:false,area:null});state.roomCode=code;state.playerId=playerId;state.isHost=false;localStorage.setItem("zoo_room",code);localStorage.setItem("zoo_player",playerId);localStorage.setItem("zoo_name",name);showRoom();attachRoomListener();setupPresence()}catch(e){setEntryError(e.message)}finally{$("joinRoomBtn").disabled=false}}
+function setupPresence(){const connRef=ref(db,`rooms/${state.roomCode}/players/${state.playerId}/connected`);set(connRef,true);onDisconnect(connRef).set(false)}
+function attachRoomListener(){if(state.roomUnsub)state.roomUnsub();const roomRef=ref(db,`rooms/${state.roomCode}`);state.roomUnsub=onValue(roomRef,snap=>{if(!snap.exists()){setRoomError("このルームは削除されました。");return}state.roomData=snap.val();state.isHost=state.roomData.hostPlayerId===state.playerId;renderRoom()},err=>{$("connText").textContent="接続エラー";setRoomError(err.message)})}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
+function renderRoom(){const room=state.roomData||{};const playersObj=room.players||{};const entries=Object.entries(playersObj).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));$("connDot").className="dot ok";$("connText").textContent="同期中";$("phaseText").textContent=room.phase==="area_assignment"?"エリア割当済み":"ロビー";$("playerCount").textContent=entries.length;$("playersList").innerHTML=entries.map(([id,p])=>{const isHost=id===room.hostPlayerId;const area=AREAS.find(a=>a.id===p.area);return `<div class="player"><div class="player-main"><div class="player-name">${escapeHtml(p.name||"名無し")}${isHost?'<span class="host-note">HOST</span>':''}</div><div class="meta">${p.connected?"オンライン":"オフライン"}</div>${area?`<div class="area">${area.label}</div>`:""}</div><div class="ready ${p.ready?"yes":""}">${p.ready?"READY":"WAIT"}</div></div>`}).join("");$("assignAreasBtn").classList.toggle("hidden",!state.isHost);$("resetReadyBtn").classList.toggle("hidden",!state.isHost);const me=playersObj[state.playerId];if(me){$("readyBtn").textContent=me.ready?"READY解除":"READY";$("readyBtn").className=me.ready?"secondary":"ok"}const allReady=entries.length>0&&entries.every(([,p])=>p.ready);setRoomMsg(allReady?"✅ 全員READY！ 次の工程へ進めます。":"")}
+async function toggleReady(){if(!state.roomData)return;const me=state.roomData.players?.[state.playerId];if(!me)return;await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{ready:!me.ready})}
+async function resetReady(){if(!state.isHost||!state.roomData)return;const updates={};for(const id of Object.keys(state.roomData.players||{}))updates[`rooms/${state.roomCode}/players/${id}/ready`]=false;await update(ref(db),updates)}
+async function assignAreas(){setRoomError("");if(!state.isHost||!state.roomData)return;const players=Object.entries(state.roomData.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));const shuffled=shuffle(AREAS);const updates={[`rooms/${state.roomCode}/phase`]:"area_assignment"};players.forEach(([id],i)=>{updates[`rooms/${state.roomCode}/players/${id}/area`]=shuffled[i].id;updates[`rooms/${state.roomCode}/players/${id}/ready`]=false});await update(ref(db),updates)}
+async function leaveRoom(){if(!state.roomCode||!state.playerId)return;const code=state.roomCode,playerId=state.playerId,room=state.roomData;try{if(room?.hostPlayerId===playerId){const others=Object.entries(room.players||{}).filter(([id])=>id!==playerId).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));if(others.length===0)await remove(ref(db,`rooms/${code}`));else{const updates={[`rooms/${code}/hostPlayerId`]:others[0][0],[`rooms/${code}/players/${playerId}`]:null};await update(ref(db),updates)}}else await remove(ref(db,`rooms/${code}/players/${playerId}`))}catch(e){setRoomError(e.message);return}if(state.roomUnsub)state.roomUnsub();state.roomCode=null;state.playerId=null;state.roomData=null;state.isHost=false;localStorage.removeItem("zoo_room");localStorage.removeItem("zoo_player");showEntry()}
+$("createRoomBtn").addEventListener("click",createRoom);$("joinRoomBtn").addEventListener("click",joinRoom);$("assignAreasBtn").addEventListener("click",assignAreas);$("readyBtn").addEventListener("click",toggleReady);$("resetReadyBtn").addEventListener("click",resetReady);$("leaveBtn").addEventListener("click",leaveRoom);$("joinCode").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4));const savedName=localStorage.getItem("zoo_name");if(savedName)$("playerName").value=savedName;
 </script>
 </body>
 </html>
