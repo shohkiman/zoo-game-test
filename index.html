@@ -3,59 +3,301 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zoo Game ルームテスト Ver.0.1</title>
+<title>Zoo Game Ver.0.2</title>
 <style>
-:root{--bg:#f3f5f7;--panel:#fff;--ink:#1f2937;--muted:#6b7280;--line:#dbe1e8;--accent:#111827;--ok:#16a34a;--warn:#d97706;--danger:#dc2626}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{width:min(100%,760px);margin:auto;padding:18px 14px 40px}h1{margin:8px 0 4px;font-size:clamp(26px,7vw,38px)}.sub{margin:0 0 18px;color:var(--muted);line-height:1.55}.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 8px 24px rgba(0,0,0,.05)}.grid{display:grid;gap:12px}.two{grid-template-columns:1fr 1fr}label{display:block;font-weight:700;margin:0 0 6px}input{width:100%;padding:13px 14px;font-size:17px;border:1px solid #cbd5e1;border-radius:12px;outline:none;background:#fff}input:focus{border-color:#334155}button{width:100%;border:0;border-radius:12px;min-height:48px;padding:11px 14px;font-size:16px;font-weight:800;cursor:pointer;background:var(--accent);color:#fff}button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)}button.warn{background:var(--warn)}button.danger{background:var(--danger)}button:disabled{opacity:.45;cursor:not-allowed}.room-head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.code{font-size:clamp(32px,11vw,54px);font-weight:900;letter-spacing:.12em;line-height:1}.badge{display:inline-flex;align-items:center;gap:7px;background:#eef2f7;border-radius:999px;padding:8px 11px;font-size:13px;font-weight:700}.dot{width:9px;height:9px;border-radius:50%;background:#9ca3af}.dot.ok{background:#22c55e}.players{display:grid;gap:9px;margin-top:12px}.player{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fafafa}.player-main{min-width:0}.player-name{font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{color:var(--muted);font-size:13px;margin-top:3px}.ready{font-size:13px;font-weight:900;padding:7px 9px;border-radius:999px;background:#e5e7eb}.ready.yes{background:#dcfce7;color:#166534}.area{display:inline-block;margin-top:6px;padding:5px 8px;border-radius:9px;background:#eef2ff;font-size:13px;font-weight:800}.host-note{font-size:13px;color:#7c3aed;margin-left:6px}.error{color:#b91c1c;white-space:pre-wrap;font-size:14px;margin-top:10px}.success{color:#166534;font-size:14px;margin-top:10px}.hidden{display:none!important}.actions{display:grid;gap:10px;margin-top:12px}.phase{padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid var(--line);font-size:14px}.footer-note{font-size:12px;color:#94a3b8;line-height:1.6;margin-top:14px}@media(max-width:560px){.two{grid-template-columns:1fr}.player{grid-template-columns:1fr auto}}
+:root{
+  --bg:#f3f5f7;--panel:#fff;--ink:#1f2937;--muted:#6b7280;--line:#dbe1e8;
+  --accent:#111827;--ok:#16a34a;--warn:#d97706;--danger:#dc2626;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
+font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{width:min(100%,820px);margin:auto;padding:16px 12px 40px}
+h1{margin:6px 0 3px;font-size:clamp(25px,7vw,38px)}
+h2{margin:0 0 12px;font-size:21px}
+.sub{margin:0 0 16px;color:var(--muted);line-height:1.55}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin:11px 0;
+box-shadow:0 8px 24px rgba(0,0,0,.05)}
+.grid{display:grid;gap:11px}.two{grid-template-columns:1fr 1fr}
+label{display:block;font-weight:800;margin:0 0 6px}
+input,select{width:100%;padding:12px 13px;font-size:16px;border:1px solid #cbd5e1;border-radius:12px;background:#fff}
+button{width:100%;border:0;border-radius:12px;min-height:47px;padding:10px 13px;font-size:15px;font-weight:900;cursor:pointer;background:var(--accent);color:#fff}
+button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)}button.warn{background:var(--warn)}button.danger{background:var(--danger)}
+button:disabled{opacity:.42;cursor:not-allowed}.hidden{display:none!important}
+.room-head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.code{font-size:clamp(30px,10vw,50px);font-weight:900;letter-spacing:.12em;line-height:1}
+.badge{display:inline-flex;align-items:center;gap:7px;background:#eef2f7;border-radius:999px;padding:8px 11px;font-size:13px;font-weight:800}
+.dot{width:9px;height:9px;border-radius:50%;background:#9ca3af}.dot.ok{background:#22c55e}
+.players{display:grid;gap:8px;margin-top:11px}
+.player{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:13px;background:#fafafa}
+.player-name{font-size:16px;font-weight:900}.meta{color:var(--muted);font-size:12px;margin-top:2px}
+.host-note{font-size:12px;color:#7c3aed;margin-left:5px}.area{display:inline-block;margin-top:5px;padding:4px 7px;border-radius:8px;background:#eef2ff;font-size:12px;font-weight:900}
+.ready{font-size:12px;font-weight:900;padding:7px 9px;border-radius:999px;background:#e5e7eb}.ready.yes{background:#dcfce7;color:#166534}
+.actions{display:grid;gap:9px;margin-top:12px}.phase{padding:9px 11px;border-radius:11px;background:#f8fafc;border:1px solid var(--line);font-size:13px}
+.error{color:#b91c1c;white-space:pre-wrap;font-size:13px;margin-top:9px}.success{color:#166534;font-size:13px;margin-top:9px}
+.zoo-title{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.points{font-weight:900;background:#fff7ed;border:1px solid #fed7aa;border-radius:999px;padding:7px 10px;font-size:13px}
+.cages{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.cage{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fafafa}
+.cage-no{font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px}
+.cage-no strong{color:#111827;font-size:15px}
+.cage1{border-color:#f59e0b}.cage2{border-color:#94a3b8}
+.animal-card{margin-top:8px;padding:9px;border-radius:11px;background:#fff;border:1px solid #e5e7eb}
+.animal-name{font-weight:900;font-size:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:7px}
+.stat{font-size:11px;color:#475569;background:#f8fafc;border-radius:7px;padding:4px 5px;text-align:center}
+.upkeep{margin-top:6px;font-size:12px;font-weight:800;color:#92400e}
+.bench{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.bench-card{padding:9px;border-radius:12px;border:1px dashed #cbd5e1;background:#f8fafc}
+.bench-card .animal-name{font-size:14px}
+.roster-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px}
+.small-btn{min-height:40px;font-size:13px}
+.footer-note{font-size:12px;color:#94a3b8;line-height:1.55;margin-top:12px}
+@media(max-width:560px){.two{grid-template-columns:1fr}.cages{grid-template-columns:1fr}.bench{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>🦁 Zoo Game</h1>
-<p class="sub">ルーム作成・参加・エリア割当・READY同期テスト Ver.0.1</p>
-<section id="entryPanel" class="panel">
-<div class="grid">
-<div><label for="playerName">プレイヤー名</label><input id="playerName" maxlength="14" placeholder="例：ショウキ"></div>
-<div class="two grid"><button id="createRoomBtn">ルームを作る</button><div><label for="joinCode">ルームコード</label><input id="joinCode" maxlength="4" inputmode="text" autocapitalize="characters" placeholder="ABCD"></div></div>
-<button id="joinRoomBtn" class="secondary">ルームに参加する</button>
+  <h1>🦁 Zoo Game</h1>
+  <p class="sub">デジタルボードゲーム試作 Ver.0.2 — ルーム同期＋初期動物配置</p>
+
+  <section id="entryPanel" class="panel">
+    <div class="grid">
+      <div><label for="playerName">プレイヤー名</label><input id="playerName" maxlength="14" placeholder="例：ショウキ"></div>
+      <div class="two grid">
+        <button id="createRoomBtn">ルームを作る</button>
+        <div><label for="joinCode">ルームコード</label><input id="joinCode" maxlength="4" placeholder="ABCD"></div>
+      </div>
+      <button id="joinRoomBtn" class="secondary">ルームに参加する</button>
+    </div>
+    <div id="entryError" class="error"></div>
+  </section>
+
+  <section id="roomPanel" class="panel hidden">
+    <div class="room-head">
+      <div><div class="meta">ROOM CODE</div><div id="roomCodeView" class="code">----</div></div>
+      <div class="badge"><span id="connDot" class="dot"></span><span id="connText">接続中…</span></div>
+    </div>
+    <div class="phase" style="margin-top:13px">現在：<strong id="phaseText">ロビー</strong></div>
+    <div style="margin-top:14px;font-weight:900">参加プレイヤー <span id="playerCount">0</span>/5</div>
+    <div id="playersList" class="players"></div>
+    <div class="actions">
+      <button id="assignAreasBtn" class="warn hidden">エリアをランダム割当</button>
+      <button id="startSetupBtn" class="hidden">初期配置を開始</button>
+      <button id="leaveBtn" class="danger">ルームを退出</button>
+    </div>
+    <div id="roomMsg" class="success"></div>
+    <div id="roomError" class="error"></div>
+  </section>
+
+  <section id="zooPanel" class="panel hidden">
+    <div class="zoo-title">
+      <div>
+        <div class="meta">MY ZOO</div>
+        <h2 id="myAreaTitle">あなたの動物園</h2>
+      </div>
+      <div class="points">人気ポイント 200</div>
+    </div>
+    <p class="sub">10頭から6頭をゲージ1〜6に配置してください。残り4頭は自動でベンチになります。</p>
+
+    <div class="actions" style="grid-template-columns:1fr 1fr">
+      <button id="autoSetupBtn" class="secondary small-btn">おすすめ自動配置</button>
+      <button id="clearSetupBtn" class="secondary small-btn">配置をリセット</button>
+    </div>
+
+    <div id="cages" class="cages"></div>
+
+    <h2 style="margin-top:20px">🪑 ベンチ</h2>
+    <div id="bench" class="bench"></div>
+
+    <button id="confirmSetupBtn" class="ok" style="margin-top:14px">この配置で確定</button>
+    <div id="setupMsg" class="success"></div>
+    <div id="setupError" class="error"></div>
+    <div class="roster-note">※ 1番ゲージ・2番ゲージは、後のゲームで飼育料倍率（×3 / ×2）がかかります。獲得人気ポイントには倍率はかかりません。</div>
+  </section>
 </div>
-<div id="entryError" class="error"></div>
-</section>
-<section id="roomPanel" class="panel hidden">
-<div class="room-head"><div><div class="meta">ROOM CODE</div><div id="roomCodeView" class="code">----</div></div><div class="badge"><span id="connDot" class="dot"></span><span id="connText">接続中…</span></div></div>
-<div class="phase" style="margin-top:14px">現在の状態：<strong id="phaseText">ロビー</strong></div>
-<div style="margin-top:16px;font-weight:900">参加プレイヤー <span id="playerCount">0</span>/5</div>
-<div id="playersList" class="players"></div>
-<div class="actions"><button id="assignAreasBtn" class="warn hidden">エリアをランダム割当</button><button id="readyBtn" class="ok">READY</button><button id="resetReadyBtn" class="secondary hidden">READYを全解除</button><button id="leaveBtn" class="danger">ルームを退出</button></div>
-<div id="roomMsg" class="success"></div><div id="roomError" class="error"></div>
-<div class="footer-note">ホストだけがエリア割当とREADY全解除を操作できます。<br>エリアは参加人数分だけ「海・サバンナ・ジャングル・北極・都会」からランダムに割り当てます。</div>
-</section>
-</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getDatabase, ref, get, set, update, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
-const firebaseConfig={apiKey:"AIzaSyDH6fRhs1Yt-4PYlomYk_HULe2mA0dp2Sc",authDomain:"zoo-game-3a9d5.firebaseapp.com",databaseURL:"https://zoo-game-3a9d5-default-rtdb.asia-southeast1.firebasedatabase.app/",projectId:"zoo-game-3a9d5",storageBucket:"zoo-game-3a9d5.firebasestorage.app",messagingSenderId:"782185094322",appId:"1:782185094322:web:3779ccd03a92c5feec3dab"};
-const app=initializeApp(firebaseConfig);const db=getDatabase(app);
-const AREAS=[{id:"sea",label:"🌊 海"},{id:"savanna",label:"🦁 サバンナ"},{id:"jungle",label:"🌿 ジャングル"},{id:"polar",label:"❄️ 北極"},{id:"city",label:"🏙️ 都会"}];
-const $=id=>document.getElementById(id);const state={roomCode:null,playerId:null,isHost:false,roomUnsub:null,roomData:null};
-function makePlayerId(){return crypto?.randomUUID?crypto.randomUUID():"p_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,10)}
-function randomRoomCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let out="";for(let i=0;i<4;i++)out+=chars[Math.floor(Math.random()*chars.length)];return out}
+
+const firebaseConfig={
+  apiKey:"AIzaSyDH6fRhs1Yt-4PYlomYk_HULe2mA0dp2Sc",
+  authDomain:"zoo-game-3a9d5.firebaseapp.com",
+  databaseURL:"https://zoo-game-3a9d5-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId:"zoo-game-3a9d5",
+  storageBucket:"zoo-game-3a9d5.firebasestorage.app",
+  messagingSenderId:"782185094322",
+  appId:"1:782185094322:web:3779ccd03a92c5feec3dab"
+};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const $=id=>document.getElementById(id);
+
+const AREAS=[
+{id:"sea",label:"🌊 海"},{id:"savanna",label:"🦁 サバンナ"},{id:"jungle",label:"🌿 ジャングル"},
+{id:"polar",label:"❄️ 北極"},{id:"city",label:"🏙️ 都会"}];
+
+const ANIMALS={
+savanna:[
+["elephant","ゾウ",3,10,1,8,10,8,10],["lion","ライオン",8,9,1,10,8,6,8],["cheetah","チーター",10,6,4,8,5,4,7],["zebra","シマウマ",8,4,6,6,6,4,6],["hippo","カバ",4,10,1,5,10,4,8],
+["buffalo","バッファロー",6,9,6,4,8,4,6],["giraffe","キリン",6,6,4,8,9,4,8],["hyena","ハイエナ",8,6,10,1,6,8,6],["rhino","サイ",4,10,1,6,9,4,8],["ostrich","ダチョウ",10,4,6,6,6,2,4]],
+sea:[
+["dolphin","イルカ",10,6,6,10,6,10,8],["orca","シャチ",9,10,1,10,10,9,10],["sea_turtle","ウミガメ",4,4,4,8,6,6,4],["octopus","タコ",6,4,1,1,4,10,4],["sea_otter","ラッコ",8,4,4,9,4,8,6],
+["jellyfish","クラゲ",1,1,10,6,2,1,2],["squid","イカ",8,4,10,4,4,8,4],["shark","サメ",9,10,4,8,8,4,8],["starfish","ヒトデ",1,1,8,6,1,1,2],["crab","カニ",4,6,8,4,2,4,4]],
+jungle:[
+["panda","パンダ",4,6,1,10,6,6,10],["monkey","サル",10,4,10,6,2,9,4],["gorilla","ゴリラ",6,10,1,8,8,8,8],["red_panda","レッサーパンダ",8,2,4,10,2,6,4],["snake","ヘビ",6,4,6,1,4,6,2],
+["crocodile","ワニ",6,9,6,4,8,4,6],["tiger","トラ",9,9,1,8,8,6,8],["orangutan","オランウータン",6,8,1,6,6,10,8],["capybara","カピバラ",4,4,8,8,2,4,4],["sloth","ナマケモノ",1,2,4,8,4,4,4]],
+polar:[
+["seal","アザラシ",8,6,6,8,6,6,6],["reindeer","トナカイ",8,8,6,6,8,6,6],["clione","クリオネ",1,1,10,10,1,1,2],["walrus","セイウチ",4,9,1,4,10,4,8],["penguin","ペンギン",6,4,10,8,4,6,6],
+["polar_bear","シロクマ",8,10,1,10,10,6,10],["arctic_fox","ホッキョクギツネ",10,4,4,8,4,8,4],["musk_ox","ジャコウウシ",4,9,6,4,8,4,6],["narwhal","イッカク",6,8,4,8,10,6,8],["snowy_owl","シロフクロウ",8,4,4,8,4,8,6]],
+city:[
+["raccoon_dog","タヌキ",6,4,4,8,4,8,4],["bear","クマ",6,10,1,8,10,6,10],["pony","ポニー",8,6,4,8,6,6,6],["bat","コウモリ",10,2,10,1,1,8,2],["cat","ネコ",9,4,8,10,2,8,4],
+["dog","イヌ",8,6,8,8,4,10,4],["hamster","ハムスター",6,1,10,10,1,4,2],["crow","カラス",8,4,10,1,1,10,2],["pigeon","ハト",6,2,10,4,1,6,2],["squirrel","リス",8,2,8,8,1,6,2]]
+};
+function animalObj(a){return{id:a[0],name:a[1],speed:a[2],power:a[3],number:a[4],looks:a[5],size:a[6],intelligence:a[7],upkeep:a[8]}}
+const state={roomCode:null,playerId:null,isHost:false,roomData:null,roomUnsub:null,localCages:[null,null,null,null,null,null]};
+
+function makePlayerId(){return crypto?.randomUUID?crypto.randomUUID():"p_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,9)}
+function randomRoomCode(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=chars[Math.floor(Math.random()*chars.length)];return s}
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function cleanName(){return $("playerName").value.trim().slice(0,14)}
-function setEntryError(msg=""){$("entryError").textContent=msg}function setRoomError(msg=""){$("roomError").textContent=msg}function setRoomMsg(msg=""){$("roomMsg").textContent=msg}
-function showRoom(){$("entryPanel").classList.add("hidden");$("roomPanel").classList.remove("hidden");$("roomCodeView").textContent=state.roomCode}function showEntry(){$("roomPanel").classList.add("hidden");$("entryPanel").classList.remove("hidden")}
-async function createUniqueRoom(){for(let n=0;n<10;n++){const code=randomRoomCode();const snap=await get(ref(db,`rooms/${code}`));if(!snap.exists())return code}throw new Error("ルームコードを作成できませんでした。もう一度試してください。")}
-async function createRoom(){setEntryError("");const name=cleanName();if(!name){setEntryError("プレイヤー名を入力してください。");return}$("createRoomBtn").disabled=true;try{const code=await createUniqueRoom();const playerId=makePlayerId();const now=Date.now();await set(ref(db,`rooms/${code}`),{roomCode:code,status:"waiting",phase:"lobby",createdAt:now,hostPlayerId:playerId,rulesVersion:"0.1",players:{[playerId]:{name,joinedAt:now,connected:true,ready:false,area:null}}});state.roomCode=code;state.playerId=playerId;state.isHost=true;localStorage.setItem("zoo_room",code);localStorage.setItem("zoo_player",playerId);localStorage.setItem("zoo_name",name);showRoom();attachRoomListener();setupPresence()}catch(e){setEntryError(e.message)}finally{$("createRoomBtn").disabled=false}}
-async function joinRoom(){setEntryError("");const name=cleanName();const code=$("joinCode").value.trim().toUpperCase();if(!name){setEntryError("プレイヤー名を入力してください。");return}if(code.length!==4){setEntryError("4文字のルームコードを入力してください。");return}$("joinRoomBtn").disabled=true;try{const roomRef=ref(db,`rooms/${code}`);const snap=await get(roomRef);if(!snap.exists())throw new Error("そのルームは見つかりません。");const room=snap.val();const players=room.players?Object.keys(room.players):[];if(players.length>=5)throw new Error("このルームは5人で満員です。");const playerId=makePlayerId();await set(ref(db,`rooms/${code}/players/${playerId}`),{name,joinedAt:Date.now(),connected:true,ready:false,area:null});state.roomCode=code;state.playerId=playerId;state.isHost=false;localStorage.setItem("zoo_room",code);localStorage.setItem("zoo_player",playerId);localStorage.setItem("zoo_name",name);showRoom();attachRoomListener();setupPresence()}catch(e){setEntryError(e.message)}finally{$("joinRoomBtn").disabled=false}}
-function setupPresence(){const connRef=ref(db,`rooms/${state.roomCode}/players/${state.playerId}/connected`);set(connRef,true);onDisconnect(connRef).set(false)}
-function attachRoomListener(){if(state.roomUnsub)state.roomUnsub();const roomRef=ref(db,`rooms/${state.roomCode}`);state.roomUnsub=onValue(roomRef,snap=>{if(!snap.exists()){setRoomError("このルームは削除されました。");return}state.roomData=snap.val();state.isHost=state.roomData.hostPlayerId===state.playerId;renderRoom()},err=>{$("connText").textContent="接続エラー";setRoomError(err.message)})}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]))}
-function renderRoom(){const room=state.roomData||{};const playersObj=room.players||{};const entries=Object.entries(playersObj).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));$("connDot").className="dot ok";$("connText").textContent="同期中";$("phaseText").textContent=room.phase==="area_assignment"?"エリア割当済み":"ロビー";$("playerCount").textContent=entries.length;$("playersList").innerHTML=entries.map(([id,p])=>{const isHost=id===room.hostPlayerId;const area=AREAS.find(a=>a.id===p.area);return `<div class="player"><div class="player-main"><div class="player-name">${escapeHtml(p.name||"名無し")}${isHost?'<span class="host-note">HOST</span>':''}</div><div class="meta">${p.connected?"オンライン":"オフライン"}</div>${area?`<div class="area">${area.label}</div>`:""}</div><div class="ready ${p.ready?"yes":""}">${p.ready?"READY":"WAIT"}</div></div>`}).join("");$("assignAreasBtn").classList.toggle("hidden",!state.isHost);$("resetReadyBtn").classList.toggle("hidden",!state.isHost);const me=playersObj[state.playerId];if(me){$("readyBtn").textContent=me.ready?"READY解除":"READY";$("readyBtn").className=me.ready?"secondary":"ok"}const allReady=entries.length>0&&entries.every(([,p])=>p.ready);setRoomMsg(allReady?"✅ 全員READY！ 次の工程へ進めます。":"")}
-async function toggleReady(){if(!state.roomData)return;const me=state.roomData.players?.[state.playerId];if(!me)return;await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{ready:!me.ready})}
-async function resetReady(){if(!state.isHost||!state.roomData)return;const updates={};for(const id of Object.keys(state.roomData.players||{}))updates[`rooms/${state.roomCode}/players/${id}/ready`]=false;await update(ref(db),updates)}
-async function assignAreas(){setRoomError("");if(!state.isHost||!state.roomData)return;const players=Object.entries(state.roomData.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));const shuffled=shuffle(AREAS);const updates={[`rooms/${state.roomCode}/phase`]:"area_assignment"};players.forEach(([id],i)=>{updates[`rooms/${state.roomCode}/players/${id}/area`]=shuffled[i].id;updates[`rooms/${state.roomCode}/players/${id}/ready`]=false});await update(ref(db),updates)}
-async function leaveRoom(){if(!state.roomCode||!state.playerId)return;const code=state.roomCode,playerId=state.playerId,room=state.roomData;try{if(room?.hostPlayerId===playerId){const others=Object.entries(room.players||{}).filter(([id])=>id!==playerId).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));if(others.length===0)await remove(ref(db,`rooms/${code}`));else{const updates={[`rooms/${code}/hostPlayerId`]:others[0][0],[`rooms/${code}/players/${playerId}`]:null};await update(ref(db),updates)}}else await remove(ref(db,`rooms/${code}/players/${playerId}`))}catch(e){setRoomError(e.message);return}if(state.roomUnsub)state.roomUnsub();state.roomCode=null;state.playerId=null;state.roomData=null;state.isHost=false;localStorage.removeItem("zoo_room");localStorage.removeItem("zoo_player");showEntry()}
-$("createRoomBtn").addEventListener("click",createRoom);$("joinRoomBtn").addEventListener("click",joinRoom);$("assignAreasBtn").addEventListener("click",assignAreas);$("readyBtn").addEventListener("click",toggleReady);$("resetReadyBtn").addEventListener("click",resetReady);$("leaveBtn").addEventListener("click",leaveRoom);$("joinCode").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4));const savedName=localStorage.getItem("zoo_name");if(savedName)$("playerName").value=savedName;
+function setEntryError(x=""){$("entryError").textContent=x}function setRoomError(x=""){$("roomError").textContent=x}function setRoomMsg(x=""){$("roomMsg").textContent=x}
+function showRoom(){$("entryPanel").classList.add("hidden");$("roomPanel").classList.remove("hidden");$("roomCodeView").textContent=state.roomCode}
+async function createUniqueRoom(){for(let i=0;i<10;i++){const c=randomRoomCode();if(!(await get(ref(db,`rooms/${c}`))).exists())return c}throw new Error("ルームコード作成に失敗しました")}
+async function createRoom(){
+ const name=cleanName();setEntryError("");if(!name)return setEntryError("プレイヤー名を入力してください。");
+ try{
+  const code=await createUniqueRoom(),pid=makePlayerId(),now=Date.now();
+  await set(ref(db,`rooms/${code}`),{roomCode:code,status:"waiting",phase:"lobby",createdAt:now,hostPlayerId:pid,rulesVersion:"0.1",
+    players:{[pid]:{name,joinedAt:now,connected:true,ready:false,area:null,popularityPoints:200,setupComplete:false}}});
+  Object.assign(state,{roomCode:code,playerId:pid,isHost:true});showRoom();attachRoomListener();setupPresence();
+ }catch(e){setEntryError(e.message)}
+}
+async function joinRoom(){
+ const name=cleanName(),code=$("joinCode").value.trim().toUpperCase();setEntryError("");
+ if(!name)return setEntryError("プレイヤー名を入力してください。");if(code.length!==4)return setEntryError("4文字のルームコードを入力してください。");
+ try{
+  const snap=await get(ref(db,`rooms/${code}`));if(!snap.exists())throw new Error("そのルームは見つかりません。");
+  const room=snap.val(),ps=room.players?Object.keys(room.players):[];if(ps.length>=5)throw new Error("このルームは5人で満員です。");
+  const pid=makePlayerId();
+  await set(ref(db,`rooms/${code}/players/${pid}`),{name,joinedAt:Date.now(),connected:true,ready:false,area:null,popularityPoints:200,setupComplete:false});
+  Object.assign(state,{roomCode:code,playerId:pid,isHost:false});showRoom();attachRoomListener();setupPresence();
+ }catch(e){setEntryError(e.message)}
+}
+function setupPresence(){const r=ref(db,`rooms/${state.roomCode}/players/${state.playerId}/connected`);set(r,true);onDisconnect(r).set(false)}
+function attachRoomListener(){
+ if(state.roomUnsub)state.roomUnsub();
+ state.roomUnsub=onValue(ref(db,`rooms/${state.roomCode}`),snap=>{
+   if(!snap.exists())return setRoomError("このルームは削除されました。");
+   state.roomData=snap.val();state.isHost=state.roomData.hostPlayerId===state.playerId;renderRoom();renderZooIfNeeded();
+ },err=>setRoomError(err.message));
+}
+function phaseLabel(p){return({lobby:"ロビー",area_assignment:"エリア割当済み",initial_setup:"初期配置中",setup_complete:"全員配置完了"}[p]||p)}
+function renderRoom(){
+ const room=state.roomData||{},po=room.players||{},entries=Object.entries(po).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
+ $("connDot").className="dot ok";$("connText").textContent="同期中";$("phaseText").textContent=phaseLabel(room.phase);$("playerCount").textContent=entries.length;
+ $("playersList").innerHTML=entries.map(([id,p])=>{
+   const a=AREAS.find(x=>x.id===p.area);
+   return `<div class="player"><div><div class="player-name">${escapeHtml(p.name||"名無し")}${id===room.hostPlayerId?'<span class="host-note">HOST</span>':''}</div>
+   <div class="meta">${p.connected?"オンライン":"オフライン"}</div>${a?`<div class="area">${a.label}</div>`:""}</div>
+   <div class="ready ${p.setupComplete?"yes":""}">${p.setupComplete?"配置OK":"WAIT"}</div></div>`;
+ }).join("");
+ $("assignAreasBtn").classList.toggle("hidden",!state.isHost||room.phase!=="lobby");
+ $("startSetupBtn").classList.toggle("hidden",!state.isHost||room.phase!=="area_assignment");
+ const allDone=entries.length>0&&entries.every(([,p])=>p.setupComplete);
+ setRoomMsg(allDone?"✅ 全員の初期配置が完了しました！":"");
+ if(allDone&&state.isHost&&room.phase==="initial_setup")update(ref(db,`rooms/${state.roomCode}`),{phase:"setup_complete"});
+}
+async function assignAreas(){
+ if(!state.isHost)return;
+ const ps=Object.entries(state.roomData.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)),areas=shuffle(AREAS),u={};
+ u[`rooms/${state.roomCode}/phase`]="area_assignment";
+ ps.forEach(([id],i)=>{u[`rooms/${state.roomCode}/players/${id}/area`]=areas[i].id;u[`rooms/${state.roomCode}/players/${id}/setupComplete`]=false;});
+ await update(ref(db),u);
+}
+async function startSetup(){
+ if(!state.isHost)return;
+ await update(ref(db,`rooms/${state.roomCode}`),{phase:"initial_setup"});
+}
+function myPlayer(){return state.roomData?.players?.[state.playerId]||null}
+function areaAnimals(area){return (ANIMALS[area]||[]).map(animalObj)}
+function renderZooIfNeeded(){
+ const room=state.roomData,me=myPlayer();if(!room||!me)return;
+ const shouldShow=["initial_setup","setup_complete"].includes(room.phase)&&me.area;
+ $("zooPanel").classList.toggle("hidden",!shouldShow);
+ if(!shouldShow)return;
+ const area=AREAS.find(a=>a.id===me.area);$("myAreaTitle").textContent=(area?.label||"")+"エリア";
+ if(me.zoo?.cages){
+   state.localCages=[1,2,3,4,5,6].map(n=>me.zoo.cages["cage"+n]||null);
+ }
+ renderSetup();
+ $("confirmSetupBtn").disabled=!!me.setupComplete;
+ $("confirmSetupBtn").textContent=me.setupComplete?"配置確定済み":"この配置で確定";
+ $("setupMsg").textContent=me.setupComplete?"✅ 配置を保存しました。ほかのプレイヤーを待っています。":"";
+}
+function optionHtml(animals,selected,idx){
+ const used=new Set(state.localCages.filter(Boolean));
+ return `<option value="">動物を選択</option>`+animals.map(a=>{
+   const disabled=used.has(a.id)&&a.id!==selected;
+   return `<option value="${a.id}" ${a.id===selected?"selected":""} ${disabled?"disabled":""}>${a.name}</option>`;
+ }).join("");
+}
+function animalCardHtml(a){
+ if(!a)return "";
+ return `<div class="animal-card"><div class="animal-name">${a.name}</div>
+ <div class="stats"><div class="stat">速 ${a.speed}</div><div class="stat">力 ${a.power}</div><div class="stat">数 ${a.number}</div>
+ <div class="stat">見 ${a.looks}</div><div class="stat">大 ${a.size}</div><div class="stat">知 ${a.intelligence}</div></div>
+ <div class="upkeep">飼育料 ${a.upkeep}</div></div>`;
+}
+function renderSetup(){
+ const me=myPlayer();if(!me?.area)return;
+ const animals=areaAnimals(me.area),map=Object.fromEntries(animals.map(a=>[a.id,a]));
+ $("cages").innerHTML=state.localCages.map((id,i)=>{
+   const mult=i===0?"飼育料×3":i===1?"飼育料×2":"";
+   return `<div class="cage ${i===0?"cage1":i===1?"cage2":""}">
+    <div class="cage-no"><strong>${i+1}番ゲージ</strong> ${mult?`・${mult}`:""}</div>
+    <select data-cage="${i}">${optionHtml(animals,id,i)}</select>${animalCardHtml(map[id])}</div>`;
+ }).join("");
+ document.querySelectorAll("select[data-cage]").forEach(sel=>sel.addEventListener("change",e=>{
+   state.localCages[Number(e.target.dataset.cage)]=e.target.value||null;renderSetup();
+ }));
+ const used=new Set(state.localCages.filter(Boolean)),bench=animals.filter(a=>!used.has(a.id));
+ $("bench").innerHTML=bench.map(a=>`<div class="bench-card"><div class="animal-name">${a.name}</div><div class="meta">飼育料 ${a.upkeep}</div></div>`).join("");
+ const complete=state.localCages.filter(Boolean).length===6&&new Set(state.localCages).size===6;
+ $("confirmSetupBtn").disabled=!complete||!!me.setupComplete;
+ $("setupError").textContent=complete?"":"6頭すべてを重複なく配置してください。";
+}
+function autoSetup(){
+ const me=myPlayer();if(!me?.area)return;
+ const animals=areaAnimals(me.area);
+ // upkeepが高い順にACEへ偏らないよう、能力総合値で並べつつ上位6頭を自動配置
+ const ranked=[...animals].sort((a,b)=>(b.speed+b.power+b.number+b.looks+b.size+b.intelligence)-(a.speed+a.power+a.number+a.looks+a.size+a.intelligence));
+ state.localCages=ranked.slice(0,6).map(a=>a.id);renderSetup();
+}
+function clearSetup(){state.localCages=[null,null,null,null,null,null];renderSetup()}
+async function confirmSetup(){
+ const me=myPlayer();if(!me?.area)return;
+ const chosen=state.localCages.filter(Boolean);if(chosen.length!==6||new Set(chosen).size!==6)return;
+ const animals=areaAnimals(me.area),allIds=animals.map(a=>a.id),bench=allIds.filter(id=>!chosen.includes(id));
+ const cages={};chosen.forEach((id,i)=>cages["cage"+(i+1)]=id);
+ await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{
+   zoo:{cages,bench,previousMonthParticipants:[]},setupComplete:true,ready:true
+ });
+}
+async function leaveRoom(){
+ if(!state.roomData)return;const room=state.roomData,code=state.roomCode,pid=state.playerId;
+ if(room.hostPlayerId===pid){
+   const others=Object.entries(room.players||{}).filter(([id])=>id!==pid).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
+   if(!others.length)await remove(ref(db,`rooms/${code}`));
+   else{const u={};u[`rooms/${code}/hostPlayerId`]=others[0][0];u[`rooms/${code}/players/${pid}`]=null;await update(ref(db),u)}
+ }else await remove(ref(db,`rooms/${code}/players/${pid}`));
+ location.reload();
+}
+$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("assignAreasBtn").onclick=assignAreas;$("startSetupBtn").onclick=startSetup;
+$("leaveBtn").onclick=leaveRoom;$("autoSetupBtn").onclick=autoSetup;$("clearSetupBtn").onclick=clearSetup;$("confirmSetupBtn").onclick=confirmSetup;
+$("joinCode").addEventListener("input",e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4));
 </script>
 </body>
 </html>
