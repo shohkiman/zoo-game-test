@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zoo Game Ver.0.3</title>
+<title>Zoo Game Ver.0.5</title>
 <style>
 :root{--bg:#f3f5f7;--panel:#fff;--ink:#1f2937;--muted:#6b7280;--line:#dbe1e8;--accent:#111827;--ok:#16a34a;--warn:#d97706;--danger:#dc2626}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -26,15 +26,29 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
 .bench{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.bench-card{padding:9px;border-radius:12px;border:1px dashed #cbd5e1;background:#f8fafc}
 .event-card{border:2px solid #111827;border-radius:18px;padding:16px;background:#fff}.month{font-size:13px;font-weight:900;color:#6b7280}.event-name{font-size:clamp(24px,7vw,34px);font-weight:1000;margin:5px 0 10px}.event-info{display:grid;grid-template-columns:1fr 1fr;gap:8px}.info{background:#f8fafc;border-radius:11px;padding:10px}.info b{display:block;font-size:11px;color:#6b7280;margin-bottom:3px}
 .choices{display:grid;gap:9px;margin-top:12px}.choice{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}.choice input{width:22px;height:22px}
+.choice-body{min-width:0}
+.choice-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:7px}
+.choice-stat{font-size:11px;padding:5px 6px;border-radius:8px;background:#f1f5f9;color:#475569;text-align:center;font-weight:800}
+.choice-stat.target{background:#111827;color:#fff}
+.choice-note{margin-top:6px;font-size:11px;color:#b45309;font-weight:800}
+.choice-upkeep{margin-top:6px;font-size:11px;color:#6b7280;font-weight:700}
 .reveal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.reveal-card{border:1px solid var(--line);border-radius:13px;padding:11px;background:#fafafa}.reveal-card b{display:block;margin-bottom:5px}
 .notice{font-size:13px;line-height:1.6;color:#4b5563}.footer-note{font-size:12px;color:#94a3b8;line-height:1.55;margin-top:12px}
+.month-banner{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:#111827;color:#fff;margin:10px 0}
+.month-banner .big{font-size:26px;font-weight:1000}
+.month-banner .mult{font-size:13px;font-weight:900;background:#fff;color:#111827;border-radius:999px;padding:6px 9px}
+.upkeep-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.upkeep-card{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fafafa}
+.rearrange-list{display:grid;gap:10px;margin-top:12px}
+.rearrange-row{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center}
+.gameover{font-size:clamp(28px,8vw,44px);font-weight:1000;text-align:center;margin:10px 0}
 @media(max-width:560px){.two,.event-info,.reveal-grid{grid-template-columns:1fr}.cages{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>🦁 Zoo Game</h1>
-<p class="sub">Ver.0.3 — ルーム同期＋初期配置＋イベント出場</p>
+<p class="sub">Ver.0.5 — 12か月進行＋飼育料＋配置換え</p>
 
 <section id="entryPanel" class="panel">
   <div class="grid">
@@ -57,9 +71,42 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
     <button id="revealBtn" class="hidden">全員の出場動物を公開</button>
     <button id="abilityDieBtn" class="warn hidden">能力サイコロを振る</button>
     <button id="calculateBtn" class="ok hidden">順位・人気ポイントを計算</button>
+    <button id="advanceMonthBtn" class="warn hidden">次の月へ進む</button>
+    <button id="confirmRearrangeBtn" class="ok hidden">配置換えを確定</button>
     <button id="leaveBtn" class="danger">ルームを退出</button>
   </div>
   <div id="roomMsg" class="success"></div><div id="roomError" class="error"></div>
+</section>
+
+<section id="monthPanel" class="panel hidden">
+  <div class="month-banner">
+    <div>
+      <div class="meta" style="color:#cbd5e1">CURRENT MONTH</div>
+      <div id="monthBig" class="big">1月</div>
+    </div>
+    <div id="monthMultiplier" class="mult">イベント報酬 ×1</div>
+  </div>
+  <div id="monthNotice" class="notice"></div>
+</section>
+
+<section id="rearrangePanel" class="panel hidden">
+  <h2>🔄 配置換え</h2>
+  <p class="sub">4月・7月・10月の月初だけ、ゲージ1〜6とベンチを自由に入れ替えできます。</p>
+  <div id="rearrangeList" class="rearrange-list"></div>
+  <div id="rearrangeBench" class="bench"></div>
+  <div id="rearrangeError" class="error"></div>
+</section>
+
+<section id="upkeepPanel" class="panel hidden">
+  <h2>💰 飼育料</h2>
+  <div id="upkeepGrid" class="upkeep-grid"></div>
+  <div id="upkeepTotal" class="event-name" style="font-size:24px"></div>
+  <div class="footer-note">現時点ではゲージ1〜6の動物のみ徴収。1番ゲージ×3、2番ゲージ×2、3〜6番×1。</div>
+</section>
+
+<section id="gameEndPanel" class="panel hidden">
+  <div class="gameover">🎊 GAME FINISH!</div>
+  <div id="finalRanking" class="reveal-grid"></div>
 </section>
 
 <section id="zooPanel" class="panel hidden">
@@ -74,7 +121,7 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
 
 <section id="eventPanel" class="panel hidden">
   <div class="event-card">
-    <div class="month">1月 EVENT</div>
+    <div id="eventMonthLabel" class="month">1月 EVENT</div>
     <div id="eventName" class="event-name">イベント未決定</div>
     <div class="event-info">
       <div class="info"><b>出場方法</b><span id="eventEntry">—</span></div>
@@ -104,12 +151,9 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
 </section>
 
 <section id="resultPanel" class="panel hidden">
-  <h2>🏆 1月 結果</h2>
+  <h2 id="resultTitle">🏆 結果</h2>
   <div id="resultGrid" class="reveal-grid"></div>
-  <div class="footer-note">
-    同順位は、該当する順位の報酬を合計して人数で均等割りし、小数点以下を切り捨てます。<br>
-    1月のイベント報酬倍率は ×1 です。
-  </div>
+  <div class="footer-note">同順位は該当順位報酬を合算→均等割り→小数点以下切り捨て。8月×2、12月×3の月倍率を反映します。</div>
 </section>
 </div>
 
@@ -199,7 +243,14 @@ const SCORE_RULES={
 const ABILITY_BY_DIE={1:"speed",2:"power",3:"number",4:"looks",5:"size",6:"intelligence"};
 const ABILITY_LABEL={speed:"すばやさ",power:"ちから",number:"数",looks:"ルックス",size:"大きさ",intelligence:"かしこさ"};
 
-const state={roomCode:null,playerId:null,isHost:false,roomData:null,unsub:null,localCages:[null,null,null,null,null,null],localSelection:[]};
+const RULE_CONFIG={
+  startingPopularityPoints:200,
+  monthMultiplier:{8:2,12:3},
+  rearrangeMonths:[4,7,10],
+  cageUpkeepMultiplier:{1:3,2:2,3:1,4:1,5:1,6:1},
+  benchUpkeepEnabled:false
+};
+const state={roomCode:null,playerId:null,isHost:false,roomData:null,unsub:null,localCages:[null,null,null,null,null,null],localSelection:[],rearrangeCages:[null,null,null,null,null,null]};
 function makePlayerId(){return crypto?.randomUUID?crypto.randomUUID():"p_"+Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function randomCode(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join("")}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -207,7 +258,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",
 function my(){return state.roomData?.players?.[state.playerId]||null}
 function animals(area){return (ANIMALS[area]||[]).map(ao)}
 function amap(area){return Object.fromEntries(animals(area).map(a=>[a.id,a]))}
-function phaseLabel(p){return({lobby:"ロビー",area_assignment:"エリア割当済み",initial_setup:"初期配置中",setup_complete:"全員配置完了",event_selection:"出場動物選択中",event_reveal:"出場動物公開",event_result:"1月結果"}[p]||p)}
+function phaseLabel(p){return({lobby:"ロビー",area_assignment:"エリア割当済み",initial_setup:"初期配置中",setup_complete:"全員配置完了",month_start:"月初",event_selection:"出場動物選択中",event_reveal:"出場動物公開",event_result:"イベント結果",upkeep:"飼育料計算",rearrangement:"配置換え",game_end:"ゲーム終了"}[p]||p)}
 async function uniqueRoom(){for(let i=0;i<10;i++){let c=randomCode();if(!(await get(ref(db,`rooms/${c}`))).exists())return c}throw new Error("ルーム作成失敗")}
 function showRoom(){$("entryPanel").classList.add("hidden");$("roomPanel").classList.remove("hidden");$("roomCodeView").textContent=state.roomCode}
 async function createRoom(){
@@ -229,7 +280,7 @@ function listen(){
  if(state.unsub)state.unsub();
  state.unsub=onValue(ref(db,`rooms/${state.roomCode}`),s=>{if(!s.exists())return;$("connDot").className="dot ok";$("connText").textContent="同期中";state.roomData=s.val();state.isHost=state.roomData.hostPlayerId===state.playerId;renderAll()});
 }
-function renderAll(){renderRoom();renderZoo();renderEvent();renderReveal();renderResult()}
+function renderAll(){renderRoom();renderMonth();renderZoo();renderRearrange();renderEvent();renderReveal();renderResult();renderUpkeep();renderGameEnd()}
 function renderRoom(){
  let r=state.roomData,ps=Object.entries(r.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
  $("phaseText").textContent=phaseLabel(r.phase);$("playerCount").textContent=ps.length;
@@ -237,7 +288,8 @@ function renderRoom(){
  return `<div class="player"><div><div class="player-name">${esc(p.name)}${id===r.hostPlayerId?'<span class="host-note">HOST</span>':''}</div><div class="meta">${p.connected?"オンライン":"オフライン"}</div>${a?`<div class="area">${a.label}</div>`:""}</div><div class="ready ${done?"yes":""}">${done?"READY":"WAIT"}</div></div>`}).join("");
  $("assignAreasBtn").classList.toggle("hidden",!state.isHost||r.phase!=="lobby");
  $("startSetupBtn").classList.toggle("hidden",!state.isHost||r.phase!=="area_assignment");
- $("drawEventBtn").classList.toggle("hidden",!state.isHost||r.phase!=="setup_complete");
+ $("drawEventBtn").classList.toggle("hidden",!state.isHost||!["setup_complete","month_start"].includes(r.phase));
+ $("drawEventBtn").textContent=`${r.month||1}月イベントを抽選`;
  let allReady=ps.length>0&&ps.every(([,p])=>p.eventReady);
  $("revealBtn").classList.toggle("hidden",!state.isHost||r.phase!=="event_selection"||!allReady);
  let ev=r.currentEvent,rule=ev?SCORE_RULES[ev.no]:null;
@@ -248,7 +300,26 @@ function renderRoom(){
  }
  let abilityReady=!rule?.randomAbility||Number.isInteger(r.round?.abilityDie);
  $("calculateBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="event_reveal"&&diceReady&&abilityReady));
+ $("advanceMonthBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="event_result"));
+ $("confirmRearrangeBtn").classList.toggle("hidden",!(r.phase==="rearrangement"));
  $("roomMsg").textContent=r.phase==="event_selection"&&allReady?"✅ 全員READY！ 公開できます。":"";
+}
+
+function monthMultiplier(month){
+ return RULE_CONFIG.monthMultiplier[month]||1;
+}
+function renderMonth(){
+ const r=state.roomData,show=!!r&&r.phase!=="lobby"&&r.phase!=="area_assignment"&&r.phase!=="initial_setup";
+ $("monthPanel").classList.toggle("hidden",!show);
+ if(!show)return;
+ const m=r.month||1,mult=monthMultiplier(m);
+ $("monthBig").textContent=`${m}月`;
+ $("monthMultiplier").textContent=`イベント報酬 ×${mult}`;
+ let msg="";
+ if(RULE_CONFIG.rearrangeMonths.includes(m))msg="この月はイベント前に配置換えがあります。";
+ if(m===8)msg="8月はイベント人気ポイントが2倍。";
+ if(m===12)msg="12月はイベント人気ポイントが3倍。最終月です。";
+ $("monthNotice").textContent=msg;
 }
 async function assignAreas(){
  let ps=Object.entries(state.roomData.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)),ar=shuffle(AREAS),u={};
@@ -276,7 +347,12 @@ async function confirmSetup(){
 async function drawEvent(){
  let r=state.roomData,used=r.usedEventNos||[],pool=EVENTS.filter(e=>!used.includes(e.no)),ev=pool[Math.floor(Math.random()*pool.length)];
  let u={};u[`rooms/${state.roomCode}/currentEvent`]=ev;u[`rooms/${state.roomCode}/usedEventNos`]=[...used,ev.no];u[`rooms/${state.roomCode}/phase`]="event_selection";
- Object.keys(r.players||{}).forEach(id=>{u[`rooms/${state.roomCode}/players/${id}/eventReady`]=false;u[`rooms/${state.roomCode}/players/${id}/eventSelection`]=null});
+ Object.keys(r.players||{}).forEach(id=>{
+   u[`rooms/${state.roomCode}/players/${id}/eventReady`]=false;
+   u[`rooms/${state.roomCode}/players/${id}/eventSelection`]=null;
+   u[`rooms/${state.roomCode}/players/${id}/randomGauge`]=null;
+   u[`rooms/${state.roomCode}/players/${id}/scoreDie`]=null;
+ });
  await update(ref(db),u);
 }
 function selectedAnimalIdsFor(me,ev){
@@ -293,22 +369,74 @@ async function ensureRandomGauge(me,ev){
  if(ev.entryMode!=="randomGauge"||me.randomGauge)return;
  let g=Math.floor(Math.random()*6)+1;await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{randomGauge:g});
 }
+
+function eventTargetStats(ev){
+ const rule=SCORE_RULES[ev.no];
+ if(!rule)return [];
+ if(rule.randomAbility){
+   const die=state.roomData?.round?.abilityDie;
+   return die?[ABILITY_BY_DIE[die]]:[];
+ }
+ return rule.stats||[];
+}
+function effectiveAnimalForDisplay(player,animalId){
+ const base=amap(player.area)[animalId];
+ if(!base)return null;
+ const penalized=(player.zoo?.previousMonthParticipants||[]).includes(animalId);
+ const out={...base,penalized};
+ for(const st of ["speed","power","number","looks","size","intelligence"]){
+   out[st]=penalized?Math.max(1,base[st]-1):base[st];
+ }
+ return out;
+}
+function animalChoiceCardHtml(player,animalId,gaugeNo,ev,checked,disabled){
+ const a=effectiveAnimalForDisplay(player,animalId);
+ if(!a)return "";
+ const targets=new Set(eventTargetStats(ev));
+ const fields=[
+   ["speed","速"],["power","力"],["number","数"],
+   ["looks","見"],["size","大"],["intelligence","知"]
+ ];
+ return `<label class="choice">
+   <input type="checkbox" data-choice="${a.id}" ${checked?"checked":""} ${disabled?"disabled":""}>
+   <div class="choice-body">
+     <div class="animal-name">${gaugeNo}番：${a.name}</div>
+     <div class="choice-stats">
+       ${fields.map(([key,label])=>`<div class="choice-stat ${targets.has(key)?"target":""}">${label} ${a[key]}</div>`).join("")}
+     </div>
+     <div class="choice-upkeep">飼育料 ${a.upkeep}</div>
+     ${a.penalized?'<div class="choice-note">前月出場：全能力 -1</div>':""}
+   </div>
+ </label>`;
+}
 function renderEvent(){
  let r=state.roomData,me=my(),ev=r?.currentEvent,show=r&&["event_selection","event_reveal"].includes(r.phase)&&ev;$("eventPanel").classList.toggle("hidden",!show);if(!show)return;
- $("eventName").textContent=ev.name;$("eventEntry").textContent=ev.entry;$("eventMethod").textContent=ev.method;
+ $("eventMonthLabel").textContent=`${r.month||1}月 EVENT`; $("eventName").textContent=ev.name;$("eventEntry").textContent=ev.entry;$("eventMethod").textContent=ev.method;
  $("selectionWrap").classList.toggle("hidden",r.phase!=="event_selection");if(r.phase!=="event_selection")return;
  ensureRandomGauge(me,ev);
  let cages=me.zoo?.cages||{},mp=amap(me.area),cageAnimals=[1,2,3,4,5,6].map(g=>({g,id:cages["cage"+g],a:mp[cages["cage"+g]]})).filter(x=>x.a);
  if(ev.entryMode==="free"){
    if(me.eventReady&&me.eventSelection)state.localSelection=me.eventSelection;
-   $("selectionHelp").textContent=`ゲージ1〜6から${ev.selectCount}頭選んでください。`;
-   $("choices").innerHTML=cageAnimals.map(x=>`<label class="choice"><input type="checkbox" data-choice="${x.id}" ${state.localSelection.includes(x.id)?"checked":""} ${me.eventReady?"disabled":""}><div><div class="animal-name">${x.g}番：${x.a.name}</div></div></label>`).join("");
+   $("selectionHelp").textContent=`ゲージ1〜6から${ev.selectCount}頭選んでください。黒く表示された能力が今回の判定対象です。`;
+   $("choices").innerHTML=cageAnimals.map(x=>animalChoiceCardHtml(me,x.id,x.g,ev,state.localSelection.includes(x.id),me.eventReady)).join("");
    document.querySelectorAll("[data-choice]").forEach(ch=>ch.onchange=e=>{let id=e.target.dataset.choice;if(e.target.checked){if(state.localSelection.length>=ev.selectCount){e.target.checked=false;return}state.localSelection.push(id)}else state.localSelection=state.localSelection.filter(x=>x!==id)});
  }else{
    let ids=selectedAnimalIdsFor(me,ev),names=ids.map(id=>mp[id]?.name).filter(Boolean);
    let extra=ev.entryMode==="randomGauge"?`（${me.randomGauge||"-"}番ゲージ）`:"";
-   $("selectionHelp").textContent="このイベントは出場動物が自動で決まります。"+extra;
-   $("choices").innerHTML=names.map(n=>`<div class="choice"><div></div><div class="animal-name">${n}</div></div>`).join("");
+   $("selectionHelp").textContent="このイベントは出場動物が自動で決まります。"+extra+" 黒く表示された能力が今回の判定対象です。";
+   $("choices").innerHTML=ids.map(id=>{
+     const gauge=[1,2,3,4,5,6].find(g=>cages["cage"+g]===id) || "";
+     const a=effectiveAnimalForDisplay(me,id);
+     if(!a)return "";
+     const targets=new Set(eventTargetStats(ev));
+     const fields=[["speed","速"],["power","力"],["number","数"],["looks","見"],["size","大"],["intelligence","知"]];
+     return `<div class="choice"><div></div><div class="choice-body">
+       <div class="animal-name">${gauge?gauge+"番：":""}${a.name}</div>
+       <div class="choice-stats">${fields.map(([key,label])=>`<div class="choice-stat ${targets.has(key)?"target":""}">${label} ${a[key]}</div>`).join("")}</div>
+       <div class="choice-upkeep">飼育料 ${a.upkeep}</div>
+       ${a.penalized?'<div class="choice-note">前月出場：全能力 -1</div>':""}
+     </div></div>`;
+   }).join("");
  }
  $("submitSelectionBtn").disabled=!!me.eventReady;$("submitSelectionBtn").textContent=me.eventReady?"READY済み":"この動物でREADY";$("selectionMsg").textContent=me.eventReady?"✅ READYしました。":"";
 }
@@ -392,8 +520,9 @@ async function calculateResults(){
  let entries=Object.entries(r.players||{}).map(([id,p])=>({id,name:p.name,area:p.area,score:scoreForPlayer(p,ev,rule,abilityStat)}));
  let ranked=rankAndRewards(entries,rule.rewards);
  let u={}; ranked.forEach(x=>{
-   u[`rooms/${state.roomCode}/round/results/${x.id}`]={score:x.score,rank:x.rank,reward:x.reward};
-   u[`rooms/${state.roomCode}/players/${x.id}/popularityPoints`]=(r.players[x.id].popularityPoints||0)+x.reward;
+   let mult=monthMultiplier(r.month||1),finalReward=x.reward*mult;
+   u[`rooms/${state.roomCode}/round/results/${x.id}`]={score:x.score,rank:x.rank,baseReward:x.reward,monthMultiplier:mult,reward:finalReward};
+   u[`rooms/${state.roomCode}/players/${x.id}/popularityPoints`]=(r.players[x.id].popularityPoints||0)+finalReward;
  });
  u[`rooms/${state.roomCode}/phase`]="event_result";
  await update(ref(db),u);
@@ -403,13 +532,117 @@ function renderResult(){
  $("revealPanel").classList.add("hidden");$("eventPanel").classList.remove("hidden");$("selectionWrap").classList.add("hidden");
  let results=r.round?.results||{};
  let arr=Object.entries(results).map(([id,x])=>({id,...x,p:r.players[id]})).sort((a,b)=>a.rank-b.rank||b.score-a.score);
- $("resultGrid").innerHTML=arr.map(x=>`<div class="reveal-card"><b>${x.rank}位　${esc(x.p?.name||"")}</b><div class="area">${AREAS.find(a=>a.id===x.p?.area)?.label||""}</div><div style="margin-top:8px;font-size:22px;font-weight:1000">判定値 ${x.score}</div><div style="margin-top:5px;font-weight:900;color:#166534">＋${x.reward} 人気ポイント</div><div class="meta">現在 ${x.p?.popularityPoints??0} pt</div></div>`).join("");
+ $("resultTitle").textContent=`🏆 ${r.month||1}月 結果`; $("resultGrid").innerHTML=arr.map(x=>`<div class="reveal-card"><b>${x.rank}位　${esc(x.p?.name||"")}</b><div class="area">${AREAS.find(a=>a.id===x.p?.area)?.label||""}</div><div style="margin-top:8px;font-size:22px;font-weight:1000">判定値 ${x.score}</div><div style="margin-top:5px;font-weight:900;color:#166534">＋${x.reward} 人気ポイント</div><div class="meta">現在 ${x.p?.popularityPoints??0} pt</div></div>`).join("");
+}
+
+function calculatePlayerUpkeep(player){
+ const cages=player.zoo?.cages||{},mp=amap(player.area),items=[];
+ let total=0;
+ for(let g=1;g<=6;g++){
+   const id=cages["cage"+g],a=mp[id];
+   if(!a)continue;
+   const mult=RULE_CONFIG.cageUpkeepMultiplier[g]||1;
+   const cost=a.upkeep*mult;
+   items.push({g,id,name:a.name,base:a.upkeep,mult,cost});
+   total+=cost;
+ }
+ if(RULE_CONFIG.benchUpkeepEnabled){
+   for(const id of player.zoo?.bench||[]){
+     const a=mp[id]; if(!a)continue;
+     items.push({g:"bench",id,name:a.name,base:a.upkeep,mult:1,cost:a.upkeep});
+     total+=a.upkeep;
+   }
+ }
+ return {items,total};
+}
+async function advanceMonth(){
+ if(!state.isHost)return;
+ const r=state.roomData,m=r.month||1;
+ // First apply upkeep and previous-month participant record.
+ const u={};
+ for(const [id,p] of Object.entries(r.players||{})){
+   const up=calculatePlayerUpkeep(p);
+   const currentPts=p.popularityPoints||0;
+   u[`rooms/${state.roomCode}/players/${id}/popularityPoints`]=currentPts-up.total;
+   u[`rooms/${state.roomCode}/players/${id}/lastUpkeep`]=up;
+   u[`rooms/${state.roomCode}/players/${id}/zoo/previousMonthParticipants`]=p.eventSelection||[];
+   u[`rooms/${state.roomCode}/players/${id}/eventReady`]=false;
+   u[`rooms/${state.roomCode}/players/${id}/eventSelection`]=null;
+   u[`rooms/${state.roomCode}/players/${id}/scoreDie`]=null;
+   u[`rooms/${state.roomCode}/players/${id}/randomGauge`]=null;
+ }
+ u[`rooms/${state.roomCode}/phase`]="upkeep";
+ await update(ref(db),u);
+
+ // Briefly persist upkeep phase, then move to next month/game end.
+ setTimeout(async()=>{
+   const fresh=(await get(ref(db,`rooms/${state.roomCode}`))).val();
+   if(!fresh)return;
+   if(m>=12){
+     await update(ref(db,`rooms/${state.roomCode}`),{phase:"game_end"});
+     return;
+   }
+   const next=m+1;
+   const updates={month:next,currentEvent:null,round:null};
+   if(RULE_CONFIG.rearrangeMonths.includes(next)){
+     updates.phase="rearrangement";
+     for(const id of Object.keys(fresh.players||{}))updates[`players/${id}/rearrangeReady`]=false;
+   }else{
+     updates.phase="month_start";
+   }
+   await update(ref(db,`rooms/${state.roomCode}`),updates);
+ },700);
+}
+function renderUpkeep(){
+ const r=state.roomData,show=r?.phase==="upkeep";$("upkeepPanel").classList.toggle("hidden",!show);if(!show)return;
+ const me=my(),up=calculatePlayerUpkeep(me);
+ $("upkeepGrid").innerHTML=up.items.map(x=>`<div class="upkeep-card"><b>${x.g==="bench"?"ベンチ":x.g+"番"}：${x.name}</b><div class="meta">基本 ${x.base} × ${x.mult}</div><div style="font-weight:900;margin-top:4px">-${x.cost} pt</div></div>`).join("");
+ $("upkeepTotal").textContent=`合計 -${up.total} pt`;
+}
+function renderRearrange(){
+ const r=state.roomData,me=my(),show=r?.phase==="rearrangement"; if(!show)state.rearrangeCages=[null,null,null,null,null,null];$("rearrangePanel").classList.toggle("hidden",!show);if(!show)return;
+ const mp=amap(me.area),all=animals(me.area);
+ if(!state.rearrangeCages.some(Boolean)){
+   state.rearrangeCages=[1,2,3,4,5,6].map(g=>me.zoo?.cages?.["cage"+g]||null);
+ }
+ const used=new Set(state.rearrangeCages.filter(Boolean));
+ $("rearrangeList").innerHTML=state.rearrangeCages.map((id,i)=>`<div class="rearrange-row"><b>${i+1}番ゲージ</b><select data-rg="${i}"><option value="">選択</option>${all.map(a=>`<option value="${a.id}" ${a.id===id?"selected":""} ${used.has(a.id)&&a.id!==id?"disabled":""}>${a.name}</option>`).join("")}</select></div>`).join("");
+ document.querySelectorAll("[data-rg]").forEach(s=>s.onchange=e=>{state.rearrangeCages[+e.target.dataset.rg]=e.target.value||null;renderRearrange()});
+ const bench=all.filter(a=>!used.has(a.id));
+ $("rearrangeBench").innerHTML=bench.map(a=>`<div class="bench-card"><b>${a.name}</b><div class="meta">飼育料 ${a.upkeep}</div></div>`).join("");
+ const ok=state.rearrangeCages.filter(Boolean).length===6&&new Set(state.rearrangeCages).size===6;
+ $("confirmRearrangeBtn").disabled=!ok||!!me.rearrangeReady;
+ $("confirmRearrangeBtn").textContent=me.rearrangeReady?"配置換え確定済み":"配置換えを確定";
+ $("rearrangeError").textContent=ok?"":"6頭を重複なく配置してください。";
+}
+async function confirmRearrange(){
+ const r=state.roomData,me=my(),chosen=state.rearrangeCages.filter(Boolean);
+ if(chosen.length!==6||new Set(chosen).size!==6)return;
+ const allIds=animals(me.area).map(a=>a.id),cages={};
+ chosen.forEach((id,i)=>cages["cage"+(i+1)]=id);
+ await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{
+   zoo:{...me.zoo,cages,bench:allIds.filter(id=>!chosen.includes(id))},
+   rearrangeReady:true
+ });
+ const players=(await get(ref(db,`rooms/${state.roomCode}/players`))).val()||{};
+ if(Object.values(players).every(p=>p.rearrangeReady)){
+   const u={phase:"month_start"};
+   Object.keys(players).forEach(id=>u[`players/${id}/rearrangeReady`]=false);
+   await update(ref(db,`rooms/${state.roomCode}`),u);
+ }
+}
+function renderGameEnd(){
+ const r=state.roomData,show=r?.phase==="game_end";$("gameEndPanel").classList.toggle("hidden",!show);if(!show)return;
+ const arr=Object.entries(r.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>(b.popularityPoints||0)-(a.popularityPoints||0));
+ let rank=0,last=null,count=0;
+ $("finalRanking").innerHTML=arr.map(p=>{count++;if(p.popularityPoints!==last){rank=count;last=p.popularityPoints}
+ return `<div class="reveal-card"><b>${rank}位　${esc(p.name)}</b><div class="area">${AREAS.find(a=>a.id===p.area)?.label||""}</div><div style="margin-top:8px;font-size:24px;font-weight:1000">${p.popularityPoints||0} pt</div></div>`}).join("");
 }
 async function leaveRoom(){
  let r=state.roomData,code=state.roomCode,pid=state.playerId;if(!r)return;
  if(r.hostPlayerId===pid){let o=Object.entries(r.players||{}).filter(([id])=>id!==pid).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));if(!o.length)await remove(ref(db,`rooms/${code}`));else{let u={};u[`rooms/${code}/hostPlayerId`]=o[0][0];u[`rooms/${code}/players/${pid}`]=null;await update(ref(db),u)}}else await remove(ref(db,`rooms/${code}/players/${pid}`));location.reload();
 }
-$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("assignAreasBtn").onclick=assignAreas;$("startSetupBtn").onclick=startSetup;$("autoSetupBtn").onclick=autoSetup;$("clearSetupBtn").onclick=clearSetup;$("confirmSetupBtn").onclick=confirmSetup;$("drawEventBtn").onclick=drawEvent;$("submitSelectionBtn").onclick=submitSelection;$("revealBtn").onclick=reveal;$("abilityDieBtn").onclick=rollAbilityDie;$("rollScoreDieBtn").onclick=rollScoreDie;$("calculateBtn").onclick=calculateResults;$("leaveBtn").onclick=leaveRoom;
+$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("assignAreasBtn").onclick=assignAreas;$("startSetupBtn").onclick=startSetup;$("autoSetupBtn").onclick=autoSetup;$("clearSetupBtn").onclick=clearSetup;$("confirmSetupBtn").onclick=confirmSetup;$("drawEventBtn").onclick=drawEvent;$("submitSelectionBtn").onclick=submitSelection;$("revealBtn").onclick=reveal;$("abilityDieBtn").onclick=rollAbilityDie;$("rollScoreDieBtn").onclick=rollScoreDie;$("calculateBtn").onclick=calculateResults;$("advanceMonthBtn").onclick=advanceMonth;$("confirmRearrangeBtn").onclick=confirmRearrange;$("leaveBtn").onclick=leaveRoom;
 $("joinCode").oninput=e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4);
 </script>
 </body>
