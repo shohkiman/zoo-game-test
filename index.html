@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zoo Game Firebase 通信テスト</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f4f6f8;color:#1f2937;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;place-items:center;padding:20px}
+.card{width:min(100%,560px);background:#fff;border-radius:20px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+h1{margin:0 0 8px;font-size:clamp(24px,6vw,34px)}.sub{margin:0 0 22px;color:#6b7280;line-height:1.6}
+.status{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#eef2f7;font-size:14px;margin-bottom:20px}
+.dot{width:10px;height:10px;border-radius:50%;background:#9ca3af}.dot.ok{background:#22c55e}.dot.ng{background:#ef4444}
+label{display:block;font-weight:700;margin-bottom:8px}.row{display:grid;grid-template-columns:1fr auto;gap:10px}
+input{width:100%;min-width:0;font-size:18px;padding:14px 15px;border-radius:12px;border:1px solid #d1d5db;outline:none}
+button{border:0;border-radius:12px;padding:0 18px;font-size:16px;font-weight:700;background:#111827;color:white;cursor:pointer}
+.result{margin-top:24px;padding:20px;border-radius:16px;background:#f8fafc;border:1px solid #e5e7eb}
+.result-title{font-size:13px;color:#6b7280;margin-bottom:6px}.shared-name{font-size:clamp(28px,8vw,46px);font-weight:800;min-height:1.2em;word-break:break-word}
+.time{margin-top:8px;font-size:12px;color:#9ca3af}.help{margin-top:20px;font-size:14px;line-height:1.7;color:#4b5563}.error{margin-top:14px;color:#b91c1c;font-size:14px;white-space:pre-wrap}
+@media(max-width:480px){.row{grid-template-columns:1fr}button{min-height:48px}}
+</style>
+</head>
+<body>
+<main class="card">
+<h1>🦁 Zoo Game 通信テスト</h1>
+<p class="sub">別のスマホでもこのページを開き、片方で名前を送信すると、もう片方にも即時反映されれば成功です。</p>
+<div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Firebaseへ接続中…</span></div>
+<label for="nameInput">共有する名前</label>
+<div class="row">
+<input id="nameInput" type="text" maxlength="30" placeholder="例：ショウキ" autocomplete="off">
+<button id="sendBtn" type="button">送信</button>
+</div>
+<section class="result">
+<div class="result-title">Firebaseに保存されている名前</div>
+<div id="sharedName" class="shared-name">―</div>
+<div id="updatedAt" class="time"></div>
+</section>
+<div id="errorBox" class="error"></div>
+<div class="help"><strong>テスト方法：</strong><br>① このページを2台のスマホで開く<br>② 片方で名前を入力して「送信」<br>③ もう片方の表示も自動で変われば通信成功</div>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDH6fRhs1Yt-4PYlomYk_HULe2mA0dp2Sc",
+  authDomain: "zoo-game-3a9d5.firebaseapp.com",
+  databaseURL: "https://zoo-game-3a9d5-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "zoo-game-3a9d5",
+  storageBucket: "zoo-game-3a9d5.firebasestorage.app",
+  messagingSenderId: "782185094322",
+  appId: "1:782185094322:web:3779ccd03a92c5feec3dab"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const testRef = ref(db, "connectionTest");
+
+const nameInput = document.getElementById("nameInput");
+const sendBtn = document.getElementById("sendBtn");
+const sharedName = document.getElementById("sharedName");
+const updatedAt = document.getElementById("updatedAt");
+const statusDot = document.getElementById("statusDot");
+const statusText = document.getElementById("statusText");
+const errorBox = document.getElementById("errorBox");
+
+function setStatus(ok,text){
+  statusDot.className="dot "+(ok?"ok":"ng");
+  statusText.textContent=text;
+}
+
+async function sendName(){
+  const name=nameInput.value.trim();
+  if(!name){alert("名前を入力してください。");return;}
+  sendBtn.disabled=true; errorBox.textContent="";
+  try{
+    await set(testRef,{sharedName:name,updatedAt:new Date().toISOString()});
+    nameInput.select();
+  }catch(err){
+    setStatus(false,"書き込みエラー");
+    errorBox.textContent="Firebaseへの書き込みに失敗しました。\n"+err.message;
+  }finally{
+    sendBtn.disabled=false;
+  }
+}
+
+sendBtn.addEventListener("click",sendName);
+nameInput.addEventListener("keydown",e=>{if(e.key==="Enter")sendName();});
+
+onValue(testRef,snapshot=>{
+  const data=snapshot.val();
+  setStatus(true,"Firebase接続OK");
+  if(!data){
+    sharedName.textContent="まだデータなし";
+    updatedAt.textContent="";
+    return;
+  }
+  sharedName.textContent=data.sharedName??"―";
+  updatedAt.textContent=data.updatedAt ? "更新："+new Date(data.updatedAt).toLocaleString("ja-JP") : "";
+},error=>{
+  setStatus(false,"読み込みエラー");
+  errorBox.textContent="Firebaseから読み込めませんでした。\n"+error.message;
+});
+</script>
+</body>
+</html>
