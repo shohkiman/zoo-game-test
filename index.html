@@ -55,6 +55,8 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
     <button id="startSetupBtn" class="hidden">初期配置を開始</button>
     <button id="drawEventBtn" class="warn hidden">1月イベントを抽選</button>
     <button id="revealBtn" class="hidden">全員の出場動物を公開</button>
+    <button id="abilityDieBtn" class="warn hidden">能力サイコロを振る</button>
+    <button id="calculateBtn" class="ok hidden">順位・人気ポイントを計算</button>
     <button id="leaveBtn" class="danger">ルームを退出</button>
   </div>
   <div id="roomMsg" class="success"></div><div id="roomError" class="error"></div>
@@ -90,8 +92,24 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
 
 <section id="revealPanel" class="panel hidden">
   <h2>🎉 出場動物 一斉公開！</h2>
+  <div id="abilityResult" class="phase hidden" style="margin-bottom:10px"></div>
   <div id="revealGrid" class="reveal-grid"></div>
-  <div class="footer-note">次のVer.0.4で、サイコロ・能力判定・順位・人気ポイント処理を追加します。</div>
+
+  <div id="myDicePanel" class="panel hidden" style="box-shadow:none;margin:14px 0 0">
+    <h2>🎲 あなたのサイコロ</h2>
+    <div class="notice">このイベントでは各プレイヤーが1D6を1回振ります。出目はFirebaseに保存され、全端末で同期されます。</div>
+    <button id="rollScoreDieBtn" class="warn" style="margin-top:10px">1D6を振る</button>
+    <div id="myDiceResult" class="event-name" style="font-size:28px;margin-top:10px"></div>
+  </div>
+</section>
+
+<section id="resultPanel" class="panel hidden">
+  <h2>🏆 1月 結果</h2>
+  <div id="resultGrid" class="reveal-grid"></div>
+  <div class="footer-note">
+    同順位は、該当する順位の報酬を合計して人数で均等割りし、小数点以下を切り捨てます。<br>
+    1月のイベント報酬倍率は ×1 です。
+  </div>
 </section>
 </div>
 
@@ -145,6 +163,42 @@ const EVENTS=[
 {no:30,name:"動物園グランプリ",entry:"好きな3種",method:"能力サイコロ→3頭の対象能力合計",entryMode:"free",selectCount:3}
 ];
 
+
+const SCORE_RULES={
+1:{stats:["speed"],formula:"sum",scoreDie:true,rewards:[100,50,30,20,10]},
+2:{stats:["power"],formula:"sum",scoreDie:true,rewards:[100,50,30,20,10]},
+3:{stats:["looks"],formula:"sum",scoreDie:true,rewards:[100,50,30,20,10]},
+4:{stats:["intelligence"],formula:"sum",scoreDie:true,rewards:[100,50,30,20,10]},
+5:{stats:["size"],formula:"sum",scoreDie:true,rewards:[100,50,30,20,10]},
+6:{stats:["number","looks"],formula:"sum",scoreDie:true,rewards:[120,60,30,20,10]},
+7:{stats:["speed","size"],formula:"subtract",scoreDie:true,rewards:[120,60,30,20,10]},
+8:{stats:["power","size"],formula:"sum",scoreDie:true,rewards:[120,60,30,20,10]},
+9:{stats:["looks","intelligence"],formula:"sum",scoreDie:true,rewards:[120,60,30,20,10]},
+10:{stats:["power","number"],formula:"sum",scoreDie:true,rewards:[120,60,30,20,10]},
+11:{randomAbility:true,formula:"sum",scoreDie:false,rewards:[300,150,100,50,30]},
+12:{randomAbility:true,formula:"sum",scoreDie:false,rewards:[200,100,50,30,20]},
+13:{randomAbility:true,formula:"sum",scoreDie:false,rewards:[100,50,30,20,10]},
+14:{randomAbility:true,formula:"sum",scoreDie:false,rewards:[100,50,30,20,10]},
+15:{randomAbility:true,formula:"sum",scoreDie:false,rewards:[100,50,30,20,10]},
+16:{randomAbility:true,formula:"sum",scoreDie:false,rewards:[100,50,30,20,10]},
+17:{stats:["speed"],formula:"sum",scoreDie:false,rewards:[120,60,30,20,10]},
+18:{stats:["power"],formula:"sum",scoreDie:false,rewards:[120,60,30,20,10]},
+19:{stats:["looks"],formula:"sum",scoreDie:false,rewards:[120,60,30,20,10]},
+20:{stats:["intelligence"],formula:"sum",scoreDie:false,rewards:[120,60,30,20,10]},
+21:{stats:["size"],formula:"sum",scoreDie:false,rewards:[120,60,30,20,10]},
+22:{stats:["number"],formula:"sum",scoreDie:false,rewards:[120,60,30,20,10]},
+23:{stats:["power"],formula:"teamSum",scoreDie:true,rewards:[150,100,50,30,20]},
+24:{stats:["speed"],formula:"teamSum",scoreDie:true,rewards:[150,100,50,30,20]},
+25:{stats:["intelligence"],formula:"teamSum",scoreDie:true,rewards:[150,100,50,30,20]},
+26:{stats:["number"],formula:"teamSum",scoreDie:true,rewards:[150,100,50,30,20]},
+27:{stats:["size"],formula:"negativeTeamSum",scoreDie:true,rewards:[150,100,50,30,20]},
+28:{stats:["looks"],formula:"teamSum",scoreDie:true,rewards:[150,100,50,30,20]},
+29:{randomAbility:true,formula:"teamSum",scoreDie:false,rewards:[300,150,100,50,30]},
+30:{randomAbility:true,formula:"teamSum",scoreDie:false,rewards:[300,150,100,50,30]}
+};
+const ABILITY_BY_DIE={1:"speed",2:"power",3:"number",4:"looks",5:"size",6:"intelligence"};
+const ABILITY_LABEL={speed:"すばやさ",power:"ちから",number:"数",looks:"ルックス",size:"大きさ",intelligence:"かしこさ"};
+
 const state={roomCode:null,playerId:null,isHost:false,roomData:null,unsub:null,localCages:[null,null,null,null,null,null],localSelection:[]};
 function makePlayerId(){return crypto?.randomUUID?crypto.randomUUID():"p_"+Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function randomCode(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join("")}
@@ -153,7 +207,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",
 function my(){return state.roomData?.players?.[state.playerId]||null}
 function animals(area){return (ANIMALS[area]||[]).map(ao)}
 function amap(area){return Object.fromEntries(animals(area).map(a=>[a.id,a]))}
-function phaseLabel(p){return({lobby:"ロビー",area_assignment:"エリア割当済み",initial_setup:"初期配置中",setup_complete:"全員配置完了",event_selection:"出場動物選択中",event_reveal:"出場動物公開"}[p]||p)}
+function phaseLabel(p){return({lobby:"ロビー",area_assignment:"エリア割当済み",initial_setup:"初期配置中",setup_complete:"全員配置完了",event_selection:"出場動物選択中",event_reveal:"出場動物公開",event_result:"1月結果"}[p]||p)}
 async function uniqueRoom(){for(let i=0;i<10;i++){let c=randomCode();if(!(await get(ref(db,`rooms/${c}`))).exists())return c}throw new Error("ルーム作成失敗")}
 function showRoom(){$("entryPanel").classList.add("hidden");$("roomPanel").classList.remove("hidden");$("roomCodeView").textContent=state.roomCode}
 async function createRoom(){
@@ -175,7 +229,7 @@ function listen(){
  if(state.unsub)state.unsub();
  state.unsub=onValue(ref(db,`rooms/${state.roomCode}`),s=>{if(!s.exists())return;$("connDot").className="dot ok";$("connText").textContent="同期中";state.roomData=s.val();state.isHost=state.roomData.hostPlayerId===state.playerId;renderAll()});
 }
-function renderAll(){renderRoom();renderZoo();renderEvent();renderReveal()}
+function renderAll(){renderRoom();renderZoo();renderEvent();renderReveal();renderResult()}
 function renderRoom(){
  let r=state.roomData,ps=Object.entries(r.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
  $("phaseText").textContent=phaseLabel(r.phase);$("playerCount").textContent=ps.length;
@@ -186,6 +240,14 @@ function renderRoom(){
  $("drawEventBtn").classList.toggle("hidden",!state.isHost||r.phase!=="setup_complete");
  let allReady=ps.length>0&&ps.every(([,p])=>p.eventReady);
  $("revealBtn").classList.toggle("hidden",!state.isHost||r.phase!=="event_selection"||!allReady);
+ let ev=r.currentEvent,rule=ev?SCORE_RULES[ev.no]:null;
+ $("abilityDieBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="event_reveal"&&rule?.randomAbility&&!r.round?.abilityDie));
+ let diceReady=true;
+ if(rule?.scoreDie){
+   diceReady=ps.every(([,p])=>Number.isInteger(p.scoreDie));
+ }
+ let abilityReady=!rule?.randomAbility||Number.isInteger(r.round?.abilityDie);
+ $("calculateBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="event_reveal"&&diceReady&&abilityReady));
  $("roomMsg").textContent=r.phase==="event_selection"&&allReady?"✅ 全員READY！ 公開できます。":"";
 }
 async function assignAreas(){
@@ -256,20 +318,98 @@ async function submitSelection(){
  await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{eventSelection:ids,eventReady:true});
  state.localSelection=[];
 }
-async function reveal(){await update(ref(db,`rooms/${state.roomCode}`),{phase:"event_reveal"})}
+async function reveal(){
+ let u={phase:"event_reveal",round:{month:1,eventNo:state.roomData.currentEvent.no,abilityDie:null,results:null}};
+ Object.keys(state.roomData.players||{}).forEach(id=>{u[`players/${id}/scoreDie`]=null});
+ await update(ref(db,`rooms/${state.roomCode}`),u)
+}
+function effectiveStat(player,animalId,stat){
+ let a=amap(player.area)[animalId]; if(!a)return 0;
+ let base=a[stat]??0,pen=(player.zoo?.previousMonthParticipants||[]).includes(animalId)?1:0;
+ return Math.max(1,base-pen);
+}
+function scoreForPlayer(player,ev,rule,abilityStat){
+ let ids=player.eventSelection||[];
+ let vals=[];
+ if(rule.randomAbility){
+   vals=ids.map(id=>effectiveStat(player,id,abilityStat));
+ }else if(rule.formula==="subtract"){
+   let id=ids[0],a=effectiveStat(player,id,rule.stats[0]),b=effectiveStat(player,id,rule.stats[1]);
+   return a-b+(player.scoreDie||0);
+ }else{
+   vals=ids.flatMap(id=>rule.stats.map(st=>effectiveStat(player,id,st)));
+ }
+ let base=vals.reduce((s,v)=>s+v,0);
+ if(rule.formula==="negativeTeamSum")base=-base;
+ return base+(rule.scoreDie?(player.scoreDie||0):0);
+}
+async function rollAbilityDie(){
+ if(!state.isHost)return;
+ let die=Math.floor(Math.random()*6)+1;
+ await update(ref(db,`rooms/${state.roomCode}/round`),{abilityDie:die});
+}
+async function rollScoreDie(){
+ let me=my(),ev=state.roomData.currentEvent,rule=SCORE_RULES[ev.no];
+ if(!rule.scoreDie||Number.isInteger(me.scoreDie))return;
+ let die=Math.floor(Math.random()*6)+1;
+ await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{scoreDie:die});
+}
 function renderReveal(){
  let r=state.roomData,show=r?.phase==="event_reveal";$("revealPanel").classList.toggle("hidden",!show);if(!show)return;
  $("eventPanel").classList.remove("hidden");$("selectionWrap").classList.add("hidden");
+ let ev=r.currentEvent,rule=SCORE_RULES[ev.no],abilityDie=r.round?.abilityDie,abilityStat=abilityDie?ABILITY_BY_DIE[abilityDie]:null;
+ $("abilityResult").classList.toggle("hidden",!rule.randomAbility);
+ $("abilityResult").textContent=rule.randomAbility?(abilityDie?`能力サイコロ：${abilityDie} → ${ABILITY_LABEL[abilityStat]}`:"能力サイコロ待ち…"):"";
  $("revealGrid").innerHTML=Object.entries(r.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)).map(([id,p])=>{
    let mp=amap(p.area),names=(p.eventSelection||[]).map(x=>mp[x]?.name||x).join(" ＋ ");
-   return `<div class="reveal-card"><b>${esc(p.name)}</b><div class="area">${AREAS.find(a=>a.id===p.area)?.label||""}</div><div style="margin-top:8px;font-weight:900">${esc(names||"未選択")}</div></div>`;
+   let dice=rule.scoreDie?(Number.isInteger(p.scoreDie)?`🎲 ${p.scoreDie}`:"🎲 未実施"):"";
+   return `<div class="reveal-card"><b>${esc(p.name)}</b><div class="area">${AREAS.find(a=>a.id===p.area)?.label||""}</div><div style="margin-top:8px;font-weight:900">${esc(names||"未選択")}</div><div class="meta" style="margin-top:7px">${dice}</div></div>`;
  }).join("");
+ let me=my();
+ $("myDicePanel").classList.toggle("hidden",!rule.scoreDie);
+ if(rule.scoreDie){
+   $("rollScoreDieBtn").disabled=Number.isInteger(me.scoreDie);
+   $("rollScoreDieBtn").textContent=Number.isInteger(me.scoreDie)?"サイコロ済み":"1D6を振る";
+   $("myDiceResult").textContent=Number.isInteger(me.scoreDie)?`出目：${me.scoreDie}`:"";
+ }
+}
+function rankAndRewards(entries,rewards){
+ let sorted=[...entries].sort((a,b)=>b.score-a.score),out=[],i=0;
+ while(i<sorted.length){
+   let j=i+1;while(j<sorted.length&&sorted[j].score===sorted[i].score)j++;
+   let tied=sorted.slice(i,j),pool=0;
+   for(let k=i;k<j;k++)pool+=rewards[k]||0;
+   let each=Math.floor(pool/tied.length);
+   tied.forEach(x=>out.push({...x,rank:i+1,reward:each}));
+   i=j;
+ }
+ return out;
+}
+async function calculateResults(){
+ if(!state.isHost)return;
+ let r=state.roomData,ev=r.currentEvent,rule=SCORE_RULES[ev.no];
+ let abilityStat=rule.randomAbility?ABILITY_BY_DIE[r.round?.abilityDie]:null;
+ let entries=Object.entries(r.players||{}).map(([id,p])=>({id,name:p.name,area:p.area,score:scoreForPlayer(p,ev,rule,abilityStat)}));
+ let ranked=rankAndRewards(entries,rule.rewards);
+ let u={}; ranked.forEach(x=>{
+   u[`rooms/${state.roomCode}/round/results/${x.id}`]={score:x.score,rank:x.rank,reward:x.reward};
+   u[`rooms/${state.roomCode}/players/${x.id}/popularityPoints`]=(r.players[x.id].popularityPoints||0)+x.reward;
+ });
+ u[`rooms/${state.roomCode}/phase`]="event_result";
+ await update(ref(db),u);
+}
+function renderResult(){
+ let r=state.roomData,show=r?.phase==="event_result";$("resultPanel").classList.toggle("hidden",!show);if(!show)return;
+ $("revealPanel").classList.add("hidden");$("eventPanel").classList.remove("hidden");$("selectionWrap").classList.add("hidden");
+ let results=r.round?.results||{};
+ let arr=Object.entries(results).map(([id,x])=>({id,...x,p:r.players[id]})).sort((a,b)=>a.rank-b.rank||b.score-a.score);
+ $("resultGrid").innerHTML=arr.map(x=>`<div class="reveal-card"><b>${x.rank}位　${esc(x.p?.name||"")}</b><div class="area">${AREAS.find(a=>a.id===x.p?.area)?.label||""}</div><div style="margin-top:8px;font-size:22px;font-weight:1000">判定値 ${x.score}</div><div style="margin-top:5px;font-weight:900;color:#166534">＋${x.reward} 人気ポイント</div><div class="meta">現在 ${x.p?.popularityPoints??0} pt</div></div>`).join("");
 }
 async function leaveRoom(){
  let r=state.roomData,code=state.roomCode,pid=state.playerId;if(!r)return;
  if(r.hostPlayerId===pid){let o=Object.entries(r.players||{}).filter(([id])=>id!==pid).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));if(!o.length)await remove(ref(db,`rooms/${code}`));else{let u={};u[`rooms/${code}/hostPlayerId`]=o[0][0];u[`rooms/${code}/players/${pid}`]=null;await update(ref(db),u)}}else await remove(ref(db,`rooms/${code}/players/${pid}`));location.reload();
 }
-$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("assignAreasBtn").onclick=assignAreas;$("startSetupBtn").onclick=startSetup;$("autoSetupBtn").onclick=autoSetup;$("clearSetupBtn").onclick=clearSetup;$("confirmSetupBtn").onclick=confirmSetup;$("drawEventBtn").onclick=drawEvent;$("submitSelectionBtn").onclick=submitSelection;$("revealBtn").onclick=reveal;$("leaveBtn").onclick=leaveRoom;
+$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("assignAreasBtn").onclick=assignAreas;$("startSetupBtn").onclick=startSetup;$("autoSetupBtn").onclick=autoSetup;$("clearSetupBtn").onclick=clearSetup;$("confirmSetupBtn").onclick=confirmSetup;$("drawEventBtn").onclick=drawEvent;$("submitSelectionBtn").onclick=submitSelection;$("revealBtn").onclick=reveal;$("abilityDieBtn").onclick=rollAbilityDie;$("rollScoreDieBtn").onclick=rollScoreDie;$("calculateBtn").onclick=calculateResults;$("leaveBtn").onclick=leaveRoom;
 $("joinCode").oninput=e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4);
 </script>
 </body>
