@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Zoo Game Ver.0.5</title>
+<title>動物園エリア対抗ゲーム Ver.0.6</title>
 <style>
 :root{--bg:#f3f5f7;--panel:#fff;--ink:#1f2937;--muted:#6b7280;--line:#dbe1e8;--accent:#111827;--ok:#16a34a;--warn:#d97706;--danger:#dc2626}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -42,31 +42,81 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
 .rearrange-list{display:grid;gap:10px;margin-top:12px}
 .rearrange-row{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center}
 .gameover{font-size:clamp(28px,8vw,44px);font-weight:1000;text-align:center;margin:10px 0}
+
+.game-header{position:sticky;top:0;z-index:30;width:min(100%,860px);margin:0 auto;background:rgba(243,245,247,.95);backdrop-filter:blur(10px);padding:8px 12px}
+.header-bar{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;background:#111827;color:#fff;border-radius:15px;padding:8px 10px}
+.header-month{font-size:18px;font-weight:1000}.header-id{text-align:center;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-btn{width:42px;min-height:38px;padding:0;background:#fff;color:#111827;font-size:19px}
+.bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:40;width:min(100%,860px);display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#d7dce2;border-top:1px solid #cbd5e1;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{border-radius:0;min-height:62px;padding:6px 3px;background:#fff;color:#64748b;font-size:11px;line-height:1.2}.nav-btn.active{background:#111827;color:#fff}.nav-icon{display:block;font-size:20px;margin-bottom:2px}
+.drawer-back{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:60;display:flex;justify-content:flex-end}.drawer{width:min(90vw,380px);height:100%;overflow:auto;background:#fff;padding:18px}
+.drawer-top{display:flex;justify-content:space-between;align-items:center}.drawer-top button{width:42px;min-height:40px;padding:0}
+.room-code-small{font-size:30px;font-weight:1000;letter-spacing:.12em}
+.segment{display:flex;gap:8px}.segment label{flex:1;margin:0}.segment input{display:none}.segment span{display:block;text-align:center;padding:11px 8px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;font-weight:800}
+.segment input:checked+span{background:#111827;color:#fff}
+.setup-box{padding:12px;border-radius:14px;background:#f8fafc;border:1px solid var(--line);margin-top:10px}
+.inline-row{display:grid;grid-template-columns:1fr 150px;gap:8px;align-items:center;margin:7px 0}
+.cpu-badge{display:inline-block;background:#ede9fe;color:#6d28d9;border-radius:999px;padding:3px 6px;font-size:10px;font-weight:900;margin-left:5px}
+.area-tabs{display:flex;gap:7px;overflow:auto;padding-bottom:4px;margin-bottom:12px}.area-tab{width:auto;min-width:max-content;min-height:40px;background:#e5e7eb;color:#111827;padding:7px 11px}.area-tab.active{background:#111827;color:#fff}
+.other-layout,.board-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.other-cage,.board-card{border:1px solid var(--line);border-radius:13px;padding:10px;background:#fafafa}
+.board-event{padding:12px;border-radius:14px;background:#111827;color:#fff}.board-event small{display:block;color:#cbd5e1;margin-bottom:3px}
+.status-pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#e5e7eb;font-size:11px;font-weight:900;margin-top:6px}.status-pill.ok{background:#dcfce7;color:#166534}
+body.in-game{padding-bottom:78px}
+
 @media(max-width:560px){.two,.event-info,.reveal-grid{grid-template-columns:1fr}.cages{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
+<div id="gameHeader" class="game-header hidden">
+  <div class="header-bar">
+    <div id="headerMonth" class="header-month">1月</div>
+    <div id="headerIdentity" class="header-id">担当エリア</div>
+    <button id="menuBtn" class="menu-btn">☰</button>
+  </div>
+</div>
 <div class="wrap">
-<h1>🦁 Zoo Game</h1>
-<p class="sub">Ver.0.5 — 12か月進行＋飼育料＋配置換え</p>
+<h1>🦁 動物園エリア対抗ゲーム</h1>
+<p class="sub">5つのエリアで人気ポイントを競おう！</p>
 
 <section id="entryPanel" class="panel">
-  <div class="grid">
-    <div><label for="playerName">プレイヤー名</label><input id="playerName" maxlength="14" placeholder="例：ショウキ"></div>
-    <div class="two grid"><button id="createRoomBtn">ルームを作る</button><div><label for="joinCode">ルームコード</label><input id="joinCode" maxlength="4" placeholder="ABCD"></div></div>
-    <button id="joinRoomBtn" class="secondary">ルームに参加する</button>
+  <div class="setup-box">
+    <h2>ルームを作る</h2>
+    <label for="playerName">あなたの名前</label>
+    <input id="playerName" maxlength="14" placeholder="例：ショウキ">
+    <div style="margin-top:14px"><label>担当エリアの決め方</label>
+      <div class="segment">
+        <label><input type="radio" name="areaMode" value="random" checked><span>🎲 ランダム</span></label>
+        <label><input type="radio" name="areaMode" value="specified"><span>✋ ホストが決める</span></label>
+      </div>
+    </div>
+    <div style="margin-top:14px"><label>CPUプレイヤー</label>
+      <div class="segment">
+        <label><input type="radio" name="cpuMode" value="off" checked><span>なし</span></label>
+        <label><input type="radio" name="cpuMode" value="on"><span>あり</span></label>
+      </div>
+      <div class="notice" style="margin-top:7px">CPUありなら、人が担当しないエリアをCPUで埋めて5エリア対抗にします。</div>
+    </div>
+    <button id="createRoomBtn" style="margin-top:14px">この設定でルームを作る</button>
+  </div>
+  <div class="setup-box">
+    <h2>ルームに参加する</h2>
+    <label for="joinName">あなたの名前</label><input id="joinName" maxlength="14" placeholder="例：アサヒ">
+    <label for="joinCode" style="margin-top:10px">ルーム番号</label><input id="joinCode" maxlength="4" placeholder="ABCD">
+    <button id="joinRoomBtn" class="secondary" style="margin-top:12px">参加する</button>
   </div>
   <div id="entryError" class="error"></div>
 </section>
 
 <section id="roomPanel" class="panel hidden">
-  <div class="room-head"><div><div class="meta">ROOM CODE</div><div id="roomCodeView" class="code">----</div></div><div class="badge"><span id="connDot" class="dot"></span><span id="connText">接続中…</span></div></div>
+  <div class="room-head"><div><div class="meta">ルーム番号</div><div id="roomCodeView" class="code">----</div></div><div class="badge"><span id="connDot" class="dot"></span><span id="connText">接続中…</span></div></div>
   <div class="phase" style="margin-top:13px">現在：<strong id="phaseText">ロビー</strong></div>
-  <div style="margin-top:14px;font-weight:900">参加プレイヤー <span id="playerCount">0</span>/5</div>
+  <div id="roomSettingsView" class="notice" style="margin-top:10px"></div><div style="margin-top:14px;font-weight:900">参加プレイヤー <span id="playerCount">0</span>/5</div>
   <div id="playersList" class="players"></div>
+  <div id="specifiedAreaBox" class="setup-box hidden"><h3>担当エリアを指定</h3><div id="specifiedAreaRows"></div></div>
+  <div id="cpuSetupBox" class="setup-box hidden"><h3>CPUの強さ</h3><div class="notice">CPUごとに強さを選んでください。</div><div id="cpuDifficultyRows"></div></div>
   <div class="actions">
-    <button id="assignAreasBtn" class="warn hidden">エリアをランダム割当</button>
-    <button id="startSetupBtn" class="hidden">初期配置を開始</button>
+    <button id="assignAreasBtn" class="warn hidden">担当エリアを決める</button>
+    <button id="startSetupBtn" class="hidden">ゲームを始める</button>
     <button id="drawEventBtn" class="warn hidden">1月イベントを抽選</button>
     <button id="revealBtn" class="hidden">全員の出場動物を公開</button>
     <button id="abilityDieBtn" class="warn hidden">能力サイコロを振る</button>
@@ -81,7 +131,7 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
 <section id="monthPanel" class="panel hidden">
   <div class="month-banner">
     <div>
-      <div class="meta" style="color:#cbd5e1">CURRENT MONTH</div>
+      <div class="meta" style="color:#cbd5e1">今月</div>
       <div id="monthBig" class="big">1月</div>
     </div>
     <div id="monthMultiplier" class="mult">イベント報酬 ×1</div>
@@ -110,7 +160,7 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
 </section>
 
 <section id="zooPanel" class="panel hidden">
-  <div class="zoo-title"><div><div class="meta">MY ZOO</div><h2 id="myAreaTitle">あなたの動物園</h2></div><div class="points">人気ポイント 200</div></div>
+  <div class="zoo-title"><div><div class="meta">自分の担当エリア</div><h2 id="myAreaTitle">担当エリア</h2></div><div class="points">人気ポイント 200</div></div>
   <p class="sub">10頭から6頭をゲージ1〜6に配置。残り4頭はベンチ。</p>
   <div class="actions" style="grid-template-columns:1fr 1fr"><button id="autoSetupBtn" class="secondary">おすすめ自動配置</button><button id="clearSetupBtn" class="secondary">配置リセット</button></div>
   <div id="cages" class="cages"></div>
@@ -132,13 +182,13 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
     <h2 style="margin-top:18px">出場動物を決める</h2>
     <div id="selectionHelp" class="notice"></div>
     <div id="choices" class="choices"></div>
-    <button id="submitSelectionBtn" class="ok" style="margin-top:12px">この動物でREADY</button>
+    <button id="submitSelectionBtn" class="ok" style="margin-top:12px">この動物で準備OK！</button>
     <div id="selectionMsg" class="success"></div><div id="selectionError" class="error"></div>
   </div>
 </section>
 
 <section id="revealPanel" class="panel hidden">
-  <h2>🎉 出場動物 一斉公開！</h2>
+  <h2>🎉 出場動物を公開！</h2>
   <div id="abilityResult" class="phase hidden" style="margin-bottom:10px"></div>
   <div id="revealGrid" class="reveal-grid"></div>
 
@@ -155,7 +205,24 @@ button.secondary{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)
   <div id="resultGrid" class="reveal-grid"></div>
   <div class="footer-note">同順位は該当順位報酬を合算→均等割り→小数点以下切り捨て。8月×2、12月×3の月倍率を反映します。</div>
 </section>
+
+<section id="othersPanel" class="panel hidden">
+  <h2>👀 ほかのエリア</h2>
+  <p class="sub">ライバルのゲージ配置や動物ステータスを見られます。今月の出場動物は公開まで秘密です。</p>
+  <div id="otherAreaTabs" class="area-tabs"></div>
+  <div id="otherAreaContent"></div>
+</section>
+
+<section id="boardPanel" class="panel hidden">
+  <div class="zoo-title"><div><div class="meta">みんなのボード</div><h2 id="boardMonth">1月</h2></div><div id="boardMultiplier" class="points">イベント報酬 ×1</div></div>
+  <div id="boardEvent" class="board-event"><small>今月のイベント</small><strong>まだ決まっていません</strong></div>
+  <div id="boardGrid" class="board-grid" style="margin-top:12px"></div>
+</section>
+
 </div>
+
+<div id="drawerBack" class="drawer-back hidden"><aside class="drawer"><div class="drawer-top"><h2>ルーム情報</h2><button id="closeMenuBtn" class="secondary">×</button></div><div class="meta">ルーム番号</div><div id="drawerCode" class="room-code-small">----</div><div id="drawerSettings" class="notice" style="margin:10px 0"></div><div id="drawerPlayers" class="players"></div><button id="leaveMenuBtn" class="danger" style="margin-top:16px">ルームを退出</button></aside></div>
+<nav id="bottomNav" class="bottom-nav hidden"><button class="nav-btn active" data-tab="self"><span class="nav-icon">🦁</span>自分のエリア</button><button class="nav-btn" data-tab="event"><span class="nav-icon">🎪</span>今月のイベント</button><button class="nav-btn" data-tab="others"><span class="nav-icon">👀</span>ほかのエリア</button><button class="nav-btn" data-tab="board"><span class="nav-icon">🏆</span>みんなのボード</button></nav>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -250,7 +317,7 @@ const RULE_CONFIG={
   cageUpkeepMultiplier:{1:3,2:2,3:1,4:1,5:1,6:1},
   benchUpkeepEnabled:false
 };
-const state={roomCode:null,playerId:null,isHost:false,roomData:null,unsub:null,localCages:[null,null,null,null,null,null],localSelection:[],rearrangeCages:[null,null,null,null,null,null]};
+const state={roomCode:null,playerId:null,isHost:false,roomData:null,unsub:null,activeTab:"self",otherAreaId:null,localCages:[null,null,null,null,null,null],localSelection:[],rearrangeCages:[null,null,null,null,null,null]};
 function makePlayerId(){return crypto?.randomUUID?crypto.randomUUID():"p_"+Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function randomCode(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return Array.from({length:4},()=>c[Math.floor(Math.random()*c.length)]).join("")}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -258,21 +325,54 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",
 function my(){return state.roomData?.players?.[state.playerId]||null}
 function animals(area){return (ANIMALS[area]||[]).map(ao)}
 function amap(area){return Object.fromEntries(animals(area).map(a=>[a.id,a]))}
-function phaseLabel(p){return({lobby:"ロビー",area_assignment:"エリア割当済み",initial_setup:"初期配置中",setup_complete:"全員配置完了",month_start:"月初",event_selection:"出場動物選択中",event_reveal:"出場動物公開",event_result:"イベント結果",upkeep:"飼育料計算",rearrangement:"配置換え",game_end:"ゲーム終了"}[p]||p)}
-async function uniqueRoom(){for(let i=0;i<10;i++){let c=randomCode();if(!(await get(ref(db,`rooms/${c}`))).exists())return c}throw new Error("ルーム作成失敗")}
+function humanEntries(r=state.roomData){return Object.entries(r?.players||{}).filter(([,p])=>!p.isCPU)}
+function cpuEntries(r=state.roomData){return Object.entries(r?.players||{}).filter(([,p])=>p.isCPU)}
+function areaObj(id){return AREAS.find(a=>a.id===id)}
+function cpuLevelLabel(x){return ({weak:"よわい",normal:"ふつう",strong:"つよい"}[x]||"ふつう")}
+function inGamePhase(r=state.roomData){return !!r && !["lobby","cpu_setup","area_assignment"].includes(r.phase)}
+function showTab(tab){
+ state.activeTab=tab;
+ const map={self:["zooPanel","rearrangePanel"],event:["eventPanel","revealPanel","resultPanel","upkeepPanel","gameEndPanel"],others:["othersPanel"],board:["boardPanel"]};
+ const all=["zooPanel","rearrangePanel","eventPanel","revealPanel","resultPanel","upkeepPanel","gameEndPanel","othersPanel","boardPanel"];
+ all.forEach(id=>{const el=$(id);if(el)el.dataset.tabHidden=(map[tab]||[]).includes(id)?"0":"1"});
+ applyTabVisibility();
+ document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
+}
+function applyTabVisibility(){
+ const all=["zooPanel","rearrangePanel","eventPanel","revealPanel","resultPanel","upkeepPanel","gameEndPanel","othersPanel","boardPanel"];
+ all.forEach(id=>{const el=$(id);if(!el)return; if(el.dataset.phaseHidden==="1"||el.dataset.tabHidden==="1")el.classList.add("hidden"); else el.classList.remove("hidden")});
+}
+function setPhaseVisible(id,visible){const el=$(id);if(!el)return;el.dataset.phaseHidden=visible?"0":"1";applyTabVisibility()}
+function openMenu(){$("drawerBack").classList.remove("hidden")}
+function closeMenu(){$("drawerBack").classList.add("hidden")}
+
+function phaseLabel(p){return({lobby:"参加者を待っています",cpu_setup:"CPU設定",area_assignment:"担当エリア決定済み",initial_setup:"最初の配置",setup_complete:"1月開始待ち",month_start:"月初",event_selection:"出場動物を選択中",event_reveal:"出場動物公開",event_result:"イベント結果",upkeep:"飼育料計算",rearrangement:"配置換え",game_end:"ゲーム終了"}[p]||p)}
+async function uniqueRoom(){for(let i=0;i<10;i++){let c=randomCode();if(!(await get(ref(db,`rooms/${c}`))).exists())return c}throw new Error("ルームを作れませんでした")}
 function showRoom(){$("entryPanel").classList.add("hidden");$("roomPanel").classList.remove("hidden");$("roomCodeView").textContent=state.roomCode}
 async function createRoom(){
- const name=$("playerName").value.trim(); if(!name)return $("entryError").textContent="名前を入力してください。";
- let code=await uniqueRoom(),pid=makePlayerId(),now=Date.now();
- await set(ref(db,`rooms/${code}`),{roomCode:code,phase:"lobby",month:1,createdAt:now,hostPlayerId:pid,rulesVersion:"0.1",usedEventNos:[],players:{[pid]:{name,joinedAt:now,connected:true,area:null,popularityPoints:200,setupComplete:false,eventReady:false}}});
- Object.assign(state,{roomCode:code,playerId:pid,isHost:true});showRoom();listen();presence();
+ const name=$("playerName").value.trim(); $("entryError").textContent="";
+ if(!name)return $("entryError").textContent="あなたの名前を入力してください。";
+ const areaMode=document.querySelector('input[name="areaMode"]:checked').value;
+ const cpuEnabled=document.querySelector('input[name="cpuMode"]:checked').value==="on";
+ try{
+   const code=await uniqueRoom(),pid=makePlayerId(),now=Date.now();
+   await set(ref(db,`rooms/${code}`),{
+     roomCode:code,phase:"lobby",month:1,createdAt:now,hostPlayerId:pid,rulesVersion:"0.6",usedEventNos:[],
+     settings:{areaMode,cpuEnabled},
+     players:{[pid]:{name,joinedAt:now,connected:true,isCPU:false,area:null,popularityPoints:200,setupComplete:false,eventReady:false}}
+   });
+   Object.assign(state,{roomCode:code,playerId:pid,isHost:true});showRoom();listen();presence();
+ }catch(e){$("entryError").textContent=e.message}
 }
 async function joinRoom(){
- const name=$("playerName").value.trim(),code=$("joinCode").value.trim().toUpperCase();$("entryError").textContent="";
- if(!name)return $("entryError").textContent="名前を入力してください。";if(code.length!==4)return $("entryError").textContent="4文字コードを入力してください。";
- const snap=await get(ref(db,`rooms/${code}`));if(!snap.exists())return $("entryError").textContent="ルームがありません。";
- const room=snap.val();if(Object.keys(room.players||{}).length>=5)return $("entryError").textContent="満員です。";
- let pid=makePlayerId();await set(ref(db,`rooms/${code}/players/${pid}`),{name,joinedAt:Date.now(),connected:true,area:null,popularityPoints:200,setupComplete:false,eventReady:false});
+ const name=$("joinName").value.trim(),code=$("joinCode").value.trim().toUpperCase();$("entryError").textContent="";
+ if(!name)return $("entryError").textContent="あなたの名前を入力してください。";
+ if(code.length!==4)return $("entryError").textContent="4文字のルーム番号を入力してください。";
+ const snap=await get(ref(db,`rooms/${code}`));if(!snap.exists())return $("entryError").textContent="そのルームは見つかりません。";
+ const room=snap.val();if(room.phase!=="lobby")return $("entryError").textContent="このルームはもうゲームを始めています。";
+ if(humanEntries(room).length>=5)return $("entryError").textContent="人のプレイヤーが5人いるため参加できません。";
+ const pid=makePlayerId();
+ await set(ref(db,`rooms/${code}/players/${pid}`),{name,joinedAt:Date.now(),connected:true,isCPU:false,area:null,popularityPoints:200,setupComplete:false,eventReady:false});
  Object.assign(state,{roomCode:code,playerId:pid,isHost:false});showRoom();listen();presence();
 }
 function presence(){let r=ref(db,`rooms/${state.roomCode}/players/${state.playerId}/connected`);set(r,true);onDisconnect(r).set(false)}
@@ -280,61 +380,159 @@ function listen(){
  if(state.unsub)state.unsub();
  state.unsub=onValue(ref(db,`rooms/${state.roomCode}`),s=>{if(!s.exists())return;$("connDot").className="dot ok";$("connText").textContent="同期中";state.roomData=s.val();state.isHost=state.roomData.hostPlayerId===state.playerId;renderAll()});
 }
-function renderAll(){renderRoom();renderMonth();renderZoo();renderRearrange();renderEvent();renderReveal();renderResult();renderUpkeep();renderGameEnd()}
+function renderAll(){
+ const r=state.roomData;if(!r)return;
+ const active=inGamePhase(r);
+ $("roomPanel").classList.toggle("hidden",active);
+ $("gameHeader").classList.toggle("hidden",!active);
+ $("bottomNav").classList.toggle("hidden",!active);
+ document.body.classList.toggle("in-game",active);
+ renderRoom();renderHeader();renderDrawer();renderMonth();renderZoo();renderRearrange();renderEvent();renderReveal();renderResult();renderUpkeep();renderGameEnd();renderOthers();renderBoard();
+ if(active)showTab(state.activeTab);
+}
+
+function renderHeader(){
+ const r=state.roomData,me=my();if(!r||!me)return;
+ $("headerMonth").textContent=`${r.month||1}月`;
+ $("headerIdentity").textContent=`${areaObj(me.area)?.label||"担当未定"} ・ ${me.name}`;
+}
+function renderDrawer(){
+ const r=state.roomData;if(!r)return;
+ $("drawerCode").textContent=r.roomCode;
+ $("drawerSettings").textContent=`担当エリア：${r.settings?.areaMode==="specified"?"ホストが決める":"ランダム"} ／ CPU：${r.settings?.cpuEnabled?"あり":"なし"}`;
+ const ps=Object.entries(r.players||{}).sort((a,b)=>(a[1].isCPU?1:0)-(b[1].isCPU?1:0)||(a[1].joinedAt||0)-(b[1].joinedAt||0));
+ $("drawerPlayers").innerHTML=ps.map(([id,p])=>`<div class="player"><div><div class="player-name">${esc(p.name)}${p.isCPU?`<span class="cpu-badge">CPU・${cpuLevelLabel(p.difficulty)}</span>`:""}${id===r.hostPlayerId?'<span class="host-note">進行役</span>':""}</div><div class="meta">${areaObj(p.area)?.label||"担当未定"}${p.isCPU?"":" ／ "+(p.connected?"接続中":"オフライン")}</div></div><div class="points">${p.popularityPoints??200} pt</div></div>`).join("");
+}
 function renderRoom(){
- let r=state.roomData,ps=Object.entries(r.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
- $("phaseText").textContent=phaseLabel(r.phase);$("playerCount").textContent=ps.length;
- $("playersList").innerHTML=ps.map(([id,p])=>{let a=AREAS.find(x=>x.id===p.area);let done=r.phase==="event_selection"||r.phase==="event_reveal"?p.eventReady:p.setupComplete;
- return `<div class="player"><div><div class="player-name">${esc(p.name)}${id===r.hostPlayerId?'<span class="host-note">HOST</span>':''}</div><div class="meta">${p.connected?"オンライン":"オフライン"}</div>${a?`<div class="area">${a.label}</div>`:""}</div><div class="ready ${done?"yes":""}">${done?"READY":"WAIT"}</div></div>`}).join("");
- $("assignAreasBtn").classList.toggle("hidden",!state.isHost||r.phase!=="lobby");
- $("startSetupBtn").classList.toggle("hidden",!state.isHost||r.phase!=="area_assignment");
+ const r=state.roomData,ps=Object.entries(r.players||{}).sort((a,b)=>(a[1].isCPU?1:0)-(b[1].isCPU?1:0)||(a[1].joinedAt||0)-(b[1].joinedAt||0));
+ $("phaseText").textContent=phaseLabel(r.phase);$("playerCount").textContent=humanEntries(r).length;
+ $("roomSettingsView").textContent=`担当エリア：${r.settings?.areaMode==="specified"?"ホストが決める":"ランダム"} ／ CPU：${r.settings?.cpuEnabled?"あり":"なし"}`;
+ $("playersList").innerHTML=ps.map(([id,p])=>{const a=areaObj(p.area);let done=r.phase==="event_selection"||r.phase==="event_reveal"?p.eventReady:p.setupComplete;
+ return `<div class="player"><div><div class="player-name">${esc(p.name)}${p.isCPU?`<span class="cpu-badge">CPU・${cpuLevelLabel(p.difficulty)}</span>`:""}${id===r.hostPlayerId?'<span class="host-note">進行役</span>':""}</div><div class="meta">${p.isCPU?"CPU":(p.connected?"接続中":"オフライン")}</div>${a?`<div class="area">${a.label}</div>`:""}</div><div class="ready ${p.area?"yes":""}">${p.area?"決定":"待機"}</div></div>`}).join("");
+
+ const specified=state.isHost&&r.phase==="lobby"&&r.settings?.areaMode==="specified";
+ $("specifiedAreaBox").classList.toggle("hidden",!specified);
+ if(specified){
+   const humans=humanEntries(r);
+   $("specifiedAreaRows").innerHTML=humans.map(([id,p])=>`<div class="inline-row"><b>${esc(p.name)}</b><select data-area-player="${id}"><option value="">エリアを選ぶ</option>${AREAS.map(a=>`<option value="${a.id}" ${p.area===a.id?"selected":""}>${a.label}</option>`).join("")}</select></div>`).join("");
+ }
+ const cpuSetup=state.isHost&&r.phase==="cpu_setup";
+ $("cpuSetupBox").classList.toggle("hidden",!cpuSetup);
+ if(cpuSetup){
+   $("cpuDifficultyRows").innerHTML=cpuEntries(r).map(([id,p])=>`<div class="inline-row"><b>${areaObj(p.area)?.label} CPU</b><select data-cpu-level="${id}"><option value="weak" ${p.difficulty==="weak"?"selected":""}>よわい</option><option value="normal" ${!p.difficulty||p.difficulty==="normal"?"selected":""}>ふつう</option><option value="strong" ${p.difficulty==="strong"?"selected":""}>つよい</option></select></div>`).join("");
+   document.querySelectorAll("[data-cpu-level]").forEach(s=>s.onchange=e=>update(ref(db,`rooms/${state.roomCode}/players/${e.target.dataset.cpuLevel}`),{difficulty:e.target.value}));
+ }
+
+ $("assignAreasBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="lobby"));
+ $("assignAreasBtn").textContent=r.settings?.areaMode==="specified"?"この担当エリアで決定":"🎲 担当エリアをランダムで決める";
+ $("startSetupBtn").classList.toggle("hidden",!(state.isHost&&["area_assignment","cpu_setup"].includes(r.phase)));
+ $("startSetupBtn").textContent=r.phase==="cpu_setup"?"CPUの強さを決めてゲーム開始":"ゲーム開始";
+
  $("drawEventBtn").classList.toggle("hidden",!state.isHost||!["setup_complete","month_start"].includes(r.phase));
- $("drawEventBtn").textContent=`${r.month||1}月イベントを抽選`;
- let allReady=ps.length>0&&ps.every(([,p])=>p.eventReady);
+ $("drawEventBtn").textContent=`${r.month||1}月のイベントを抽選！`;
+ let allReady=Object.values(r.players||{}).length>0&&Object.values(r.players||{}).every(p=>p.eventReady);
  $("revealBtn").classList.toggle("hidden",!state.isHost||r.phase!=="event_selection"||!allReady);
  let ev=r.currentEvent,rule=ev?SCORE_RULES[ev.no]:null;
  $("abilityDieBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="event_reveal"&&rule?.randomAbility&&!r.round?.abilityDie));
- let diceReady=true;
- if(rule?.scoreDie){
-   diceReady=ps.every(([,p])=>Number.isInteger(p.scoreDie));
- }
+ let diceReady=true;if(rule?.scoreDie)diceReady=Object.values(r.players||{}).every(p=>Number.isInteger(p.scoreDie));
  let abilityReady=!rule?.randomAbility||Number.isInteger(r.round?.abilityDie);
  $("calculateBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="event_reveal"&&diceReady&&abilityReady));
  $("advanceMonthBtn").classList.toggle("hidden",!(state.isHost&&r.phase==="event_result"));
  $("confirmRearrangeBtn").classList.toggle("hidden",!(r.phase==="rearrangement"));
- $("roomMsg").textContent=r.phase==="event_selection"&&allReady?"✅ 全員READY！ 公開できます。":"";
+ $("roomMsg").textContent=r.phase==="event_selection"&&allReady?"✅ 全員準備OK！ 公開できます。":"";
 }
 
 function monthMultiplier(month){
  return RULE_CONFIG.monthMultiplier[month]||1;
 }
 function renderMonth(){
- const r=state.roomData,show=!!r&&r.phase!=="lobby"&&r.phase!=="area_assignment"&&r.phase!=="initial_setup";
- $("monthPanel").classList.toggle("hidden",!show);
- if(!show)return;
- const m=r.month||1,mult=monthMultiplier(m);
- $("monthBig").textContent=`${m}月`;
- $("monthMultiplier").textContent=`イベント報酬 ×${mult}`;
- let msg="";
- if(RULE_CONFIG.rearrangeMonths.includes(m))msg="この月はイベント前に配置換えがあります。";
- if(m===8)msg="8月はイベント人気ポイントが2倍。";
- if(m===12)msg="12月はイベント人気ポイントが3倍。最終月です。";
- $("monthNotice").textContent=msg;
+ $("monthPanel").classList.add("hidden");
+}
+
+function overall(a){return a.speed+a.power+a.number+a.looks+a.size+a.intelligence}
+function cpuInitialZoo(area,level){
+ let an=animals(area),chosen;
+ if(level==="weak")chosen=shuffle(an).slice(0,6);
+ else if(level==="normal")chosen=[...an].sort((a,b)=>overall(b)-overall(a)).slice(0,6);
+ else chosen=[...an].sort((a,b)=>(overall(b)-b.upkeep*1.2)-(overall(a)-a.upkeep*1.2)).slice(0,6);
+ if(level==="strong")chosen=[...chosen].sort((a,b)=>overall(b)-overall(a));
+ else if(level==="weak")chosen=shuffle(chosen);
+ const cages={};chosen.forEach((a,i)=>cages["cage"+(i+1)]=a.id);
+ return {cages,bench:an.filter(a=>!chosen.some(c=>c.id===a.id)).map(a=>a.id),previousMonthParticipants:[]};
+}
+function combinations(arr,k){
+ const out=[];function rec(start,cur){if(cur.length===k){out.push([...cur]);return}for(let i=start;i<arr.length;i++){cur.push(arr[i]);rec(i+1,cur);cur.pop()}}
+ rec(0,[]);return out;
+}
+function cpuUtility(p,ids,ev){
+ const rule=SCORE_RULES[ev.no];
+ if(rule.randomAbility)return ids.reduce((sum,id)=>sum+["speed","power","number","looks","size","intelligence"].reduce((s,st)=>s+effectiveStat(p,id,st),0),0);
+ if(rule.formula==="subtract")return effectiveStat(p,ids[0],rule.stats[0])-effectiveStat(p,ids[0],rule.stats[1]);
+ let base=ids.reduce((sum,id)=>sum+rule.stats.reduce((s,st)=>s+effectiveStat(p,id,st),0),0);
+ return rule.formula==="negativeTeamSum"?-base:base;
+}
+function cpuFreeSelection(p,ev){
+ const ids=[1,2,3,4,5,6].map(g=>p.zoo?.cages?.["cage"+g]).filter(Boolean),combos=combinations(ids,ev.selectCount),level=p.difficulty||"normal";
+ if(level==="weak")return combos[Math.floor(Math.random()*combos.length)];
+ const ranked=combos.map(c=>({c,u:cpuUtility(p,c,ev)})).sort((a,b)=>b.u-a.u);
+ if(level==="strong")return ranked[0].c;
+ const top=ranked.slice(0,Math.max(1,Math.ceil(ranked.length/3)));
+ return top[Math.floor(Math.random()*top.length)].c;
+}
+function cpuChoice(p,ev){
+ const cages=p.zoo?.cages||{};
+ if(ev.entryMode==="fixed")return {ids:[cages["cage"+ev.gauge]].filter(Boolean)};
+ if(ev.entryMode==="multiFixed")return {ids:ev.gauges.map(g=>cages["cage"+g]).filter(Boolean)};
+ if(ev.entryMode==="randomGauge"){const g=Math.floor(Math.random()*6)+1;return {ids:[cages["cage"+g]].filter(Boolean),randomGauge:g}}
+ return {ids:cpuFreeSelection(p,ev)};
 }
 async function assignAreas(){
- let ps=Object.entries(state.roomData.players||{}).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0)),ar=shuffle(AREAS),u={};
- u[`rooms/${state.roomCode}/phase`]="area_assignment";ps.forEach(([id],i)=>{u[`rooms/${state.roomCode}/players/${id}/area`]=ar[i].id});await update(ref(db),u)
+ if(!state.isHost)return;
+ const r=state.roomData,humans=humanEntries(r),u={};let assigned={};
+ if(r.settings?.areaMode==="specified"){
+   const sels=[...document.querySelectorAll("[data-area-player]")],values=sels.map(s=>s.value);
+   if(values.some(v=>!v))return $("roomError").textContent="全員の担当エリアを選んでください。";
+   if(new Set(values).size!==values.length)return $("roomError").textContent="同じエリアを2人に指定することはできません。";
+   sels.forEach(s=>assigned[s.dataset.areaPlayer]=s.value);
+ }else{
+   const ar=shuffle(AREAS).slice(0,humans.length);humans.forEach(([id],i)=>assigned[id]=ar[i].id);
+ }
+ for(const [id,area] of Object.entries(assigned))u[`rooms/${state.roomCode}/players/${id}/area`]=area;
+ const occupied=new Set(Object.values(assigned)),empty=AREAS.filter(a=>!occupied.has(a.id));
+ if(r.settings?.cpuEnabled){
+   empty.forEach((a,i)=>{
+     const id=`cpu_${a.id}`;
+     u[`rooms/${state.roomCode}/players/${id}`]={name:`${a.label.split(" ").slice(-1)[0]}CPU`,isCPU:true,connected:true,area:a.id,difficulty:"normal",joinedAt:Date.now()+i,popularityPoints:200,setupComplete:false,eventReady:false};
+   });
+   u[`rooms/${state.roomCode}/phase`]=empty.length?"cpu_setup":"area_assignment";
+ }else u[`rooms/${state.roomCode}/phase`]="area_assignment";
+ await update(ref(db),u);
 }
-async function startSetup(){await update(ref(db,`rooms/${state.roomCode}`),{phase:"initial_setup"})}
+async function startSetup(){
+ if(!state.isHost)return;
+ const r=state.roomData,u={phase:"initial_setup"};
+ for(const [id,p] of cpuEntries(r)){
+   u[`players/${id}/zoo`]=cpuInitialZoo(p.area,p.difficulty||"normal");
+   u[`players/${id}/setupComplete`]=true;
+ }
+ await update(ref(db,`rooms/${state.roomCode}`),u);
+}
 function renderZoo(){
- let r=state.roomData,me=my(),show=r&&me&&["initial_setup","setup_complete"].includes(r.phase)&&me.area;$("zooPanel").classList.toggle("hidden",!show);if(!show)return;
- $("myAreaTitle").textContent=(AREAS.find(a=>a.id===me.area)?.label||"")+"エリア";
- if(me.zoo?.cages)state.localCages=[1,2,3,4,5,6].map(n=>me.zoo.cages["cage"+n]||null);
+ const r=state.roomData,me=my(),show=r&&me&&me.area&&inGamePhase(r);setPhaseVisible("zooPanel",!!show);if(!show)return;
+ $("myAreaTitle").textContent=(areaObj(me.area)?.label||"")+"エリア";
+ const editable=r.phase==="initial_setup"&&!me.setupComplete;
+ if(me.zoo?.cages&&!editable)state.localCages=[1,2,3,4,5,6].map(n=>me.zoo.cages["cage"+n]||null);
  let an=animals(me.area),mp=amap(me.area),used=new Set(state.localCages.filter(Boolean));
- $("cages").innerHTML=state.localCages.map((id,i)=>`<div class="cage ${i===0?"cage1":i===1?"cage2":""}"><div class="cage-no">${i+1}番ゲージ ${i===0?"・飼育料×3":i===1?"・飼育料×2":""}</div><select data-c="${i}"><option value="">動物を選択</option>${an.map(a=>`<option value="${a.id}" ${a.id===id?"selected":""} ${used.has(a.id)&&a.id!==id?"disabled":""}>${a.name}</option>`).join("")}</select>${id?`<div class="animal-card"><div class="animal-name">${mp[id].name}</div><div class="stats"><div class="stat">速 ${mp[id].speed}</div><div class="stat">力 ${mp[id].power}</div><div class="stat">数 ${mp[id].number}</div><div class="stat">見 ${mp[id].looks}</div><div class="stat">大 ${mp[id].size}</div><div class="stat">知 ${mp[id].intelligence}</div></div></div>`:""}</div>`).join("");
- document.querySelectorAll("[data-c]").forEach(s=>s.onchange=e=>{state.localCages[+e.target.dataset.c]=e.target.value||null;renderZoo()});
- $("bench").innerHTML=an.filter(a=>!used.has(a.id)).map(a=>`<div class="bench-card"><b>${a.name}</b><div class="meta">飼育料 ${a.upkeep}</div></div>`).join("");
- let ok=state.localCages.filter(Boolean).length===6&&new Set(state.localCages).size===6;$("confirmSetupBtn").disabled=!ok||me.setupComplete;$("setupError").textContent=ok?"":"6頭を配置してください。";$("setupMsg").textContent=me.setupComplete?"✅ 配置確定済み":"";
+ const pointsEl=$("zooPanel").querySelector(".points");if(pointsEl)pointsEl.textContent=`${me.popularityPoints??200} pt`;
+ $("zooPanel").querySelector(".sub").textContent=editable?"10頭から6頭をゲージ1〜6に配置。残り4頭はベンチ。":"現在のゲージ配置とステータス";
+ const setupButtons=$("zooPanel").querySelector(".actions");if(setupButtons)setupButtons.classList.toggle("hidden",!editable);
+ $("confirmSetupBtn").classList.toggle("hidden",!editable);
+ $("cages").innerHTML=state.localCages.map((id,i)=>`<div class="cage ${i===0?"cage1":i===1?"cage2":""}"><div class="cage-no">${i+1}番ゲージ ${i===0?"・飼育料×3":i===1?"・飼育料×2":""}</div>${editable?`<select data-c="${i}"><option value="">動物を選択</option>${an.map(a=>`<option value="${a.id}" ${a.id===id?"selected":""} ${used.has(a.id)&&a.id!==id?"disabled":""}>${a.name}</option>`).join("")}</select>`:""}${id?`<div class="animal-card"><div class="animal-name">${mp[id].name}</div><div class="stats"><div class="stat">速 ${effectiveStat(me,id,"speed")}</div><div class="stat">力 ${effectiveStat(me,id,"power")}</div><div class="stat">数 ${effectiveStat(me,id,"number")}</div><div class="stat">見 ${effectiveStat(me,id,"looks")}</div><div class="stat">大 ${effectiveStat(me,id,"size")}</div><div class="stat">知 ${effectiveStat(me,id,"intelligence")}</div></div>${(me.zoo?.previousMonthParticipants||[]).includes(id)?'<div class="choice-note">前月出場：全能力 -1</div>':""}</div>`:""}</div>`).join("");
+ if(editable)document.querySelectorAll("[data-c]").forEach(s=>s.onchange=e=>{state.localCages[+e.target.dataset.c]=e.target.value||null;renderZoo()});
+ const benchIds=editable?an.filter(a=>!used.has(a.id)).map(a=>a.id):(me.zoo?.bench||[]);
+ $("bench").innerHTML=benchIds.map(id=>{const a=mp[id];return `<div class="bench-card"><b>${a.name}</b><div class="stats"><div class="stat">速 ${effectiveStat(me,id,"speed")}</div><div class="stat">力 ${effectiveStat(me,id,"power")}</div><div class="stat">数 ${effectiveStat(me,id,"number")}</div><div class="stat">見 ${effectiveStat(me,id,"looks")}</div><div class="stat">大 ${effectiveStat(me,id,"size")}</div><div class="stat">知 ${effectiveStat(me,id,"intelligence")}</div></div></div>`}).join("");
+ if(editable){let ok=state.localCages.filter(Boolean).length===6&&new Set(state.localCages).size===6;$("confirmSetupBtn").disabled=!ok||me.setupComplete;$("setupError").textContent=ok?"":"6頭を配置してください。";$("setupMsg").textContent=me.setupComplete?"✅ 配置決定済み":""}
+ else{$("setupError").textContent="";$("setupMsg").textContent=""}
 }
 function autoSetup(){let an=animals(my().area).sort((a,b)=>(b.speed+b.power+b.number+b.looks+b.size+b.intelligence)-(a.speed+a.power+a.number+a.looks+a.size+a.intelligence));state.localCages=an.slice(0,6).map(a=>a.id);renderZoo()}
 function clearSetup(){state.localCages=[null,null,null,null,null,null];renderZoo()}
@@ -345,15 +543,19 @@ async function confirmSetup(){
  let rr=(await get(ref(db,`rooms/${state.roomCode}/players`))).val()||{};if(Object.values(rr).every(p=>p.setupComplete))await update(ref(db,`rooms/${state.roomCode}`),{phase:"setup_complete"});
 }
 async function drawEvent(){
+ if(!state.isHost)return;
  let r=state.roomData,used=r.usedEventNos||[],pool=EVENTS.filter(e=>!used.includes(e.no)),ev=pool[Math.floor(Math.random()*pool.length)];
- let u={};u[`rooms/${state.roomCode}/currentEvent`]=ev;u[`rooms/${state.roomCode}/usedEventNos`]=[...used,ev.no];u[`rooms/${state.roomCode}/phase`]="event_selection";
- Object.keys(r.players||{}).forEach(id=>{
-   u[`rooms/${state.roomCode}/players/${id}/eventReady`]=false;
-   u[`rooms/${state.roomCode}/players/${id}/eventSelection`]=null;
-   u[`rooms/${state.roomCode}/players/${id}/randomGauge`]=null;
-   u[`rooms/${state.roomCode}/players/${id}/scoreDie`]=null;
- });
- await update(ref(db),u);
+ let u={};u[`rooms/${state.roomCode}/currentEvent`]=ev;u[`rooms/${state.roomCode}/usedEventNos`]=[...used,ev.no];u[`rooms/${state.roomCode}/phase`]="event_selection";u[`rooms/${state.roomCode}/round`]=null;
+ for(const [id,p] of Object.entries(r.players||{})){
+   u[`rooms/${state.roomCode}/players/${id}/eventReady`]=false;u[`rooms/${state.roomCode}/players/${id}/eventSelection`]=null;u[`rooms/${state.roomCode}/players/${id}/randomGauge`]=null;u[`rooms/${state.roomCode}/players/${id}/scoreDie`]=null;
+   if(p.isCPU){
+     const ch=cpuChoice(p,ev);
+     u[`rooms/${state.roomCode}/players/${id}/eventSelection`]=ch.ids;
+     u[`rooms/${state.roomCode}/players/${id}/eventReady`]=true;
+     if(ch.randomGauge)u[`rooms/${state.roomCode}/players/${id}/randomGauge`]=ch.randomGauge;
+   }
+ }
+ await update(ref(db),u);state.localSelection=[];state.activeTab="event";
 }
 function selectedAnimalIdsFor(me,ev){
  let cages=me.zoo?.cages||{};
@@ -409,9 +611,9 @@ function animalChoiceCardHtml(player,animalId,gaugeNo,ev,checked,disabled){
    </div>
  </label>`;
 }
-function renderEvent(){
+function renderEvent(){setPhaseVisible("eventPanel",true);
  let r=state.roomData,me=my(),ev=r?.currentEvent,show=r&&["event_selection","event_reveal"].includes(r.phase)&&ev;$("eventPanel").classList.toggle("hidden",!show);if(!show)return;
- $("eventMonthLabel").textContent=`${r.month||1}月 EVENT`; $("eventName").textContent=ev.name;$("eventEntry").textContent=ev.entry;$("eventMethod").textContent=ev.method;
+ $("eventMonthLabel").textContent=`${r.month||1}月のイベント`; $("eventName").textContent=ev.name;$("eventEntry").textContent=ev.entry;$("eventMethod").textContent=ev.method;
  $("selectionWrap").classList.toggle("hidden",r.phase!=="event_selection");if(r.phase!=="event_selection")return;
  ensureRandomGauge(me,ev);
  let cages=me.zoo?.cages||{},mp=amap(me.area),cageAnimals=[1,2,3,4,5,6].map(g=>({g,id:cages["cage"+g],a:mp[cages["cage"+g]]})).filter(x=>x.a);
@@ -438,7 +640,7 @@ function renderEvent(){
      </div></div>`;
    }).join("");
  }
- $("submitSelectionBtn").disabled=!!me.eventReady;$("submitSelectionBtn").textContent=me.eventReady?"READY済み":"この動物でREADY";$("selectionMsg").textContent=me.eventReady?"✅ READYしました。":"";
+ $("submitSelectionBtn").disabled=!!me.eventReady;$("submitSelectionBtn").textContent=me.eventReady?"準備OK！":"この動物で準備OK！";$("selectionMsg").textContent=me.eventReady?"✅ 準備OK！":"";
 }
 async function submitSelection(){
  let r=state.roomData,me=my(),ev=r.currentEvent,ids=selectedAnimalIdsFor(me,ev);
@@ -447,9 +649,10 @@ async function submitSelection(){
  state.localSelection=[];
 }
 async function reveal(){
- let u={phase:"event_reveal",round:{month:1,eventNo:state.roomData.currentEvent.no,abilityDie:null,results:null}};
- Object.keys(state.roomData.players||{}).forEach(id=>{u[`players/${id}/scoreDie`]=null});
- await update(ref(db,`rooms/${state.roomCode}`),u)
+ if(!state.isHost)return;
+ const r=state.roomData,rule=SCORE_RULES[r.currentEvent.no],u={phase:"event_reveal",round:{month:r.month,eventNo:r.currentEvent.no,abilityDie:null,results:null}};
+ for(const [id,p] of Object.entries(r.players||{}))if(rule.scoreDie&&p.isCPU)u[`players/${id}/scoreDie`]=Math.floor(Math.random()*6)+1;
+ await update(ref(db,`rooms/${state.roomCode}`),u);
 }
 function effectiveStat(player,animalId,stat){
  let a=amap(player.area)[animalId]; if(!a)return 0;
@@ -483,7 +686,7 @@ async function rollScoreDie(){
  await update(ref(db,`rooms/${state.roomCode}/players/${state.playerId}`),{scoreDie:die});
 }
 function renderReveal(){
- let r=state.roomData,show=r?.phase==="event_reveal";$("revealPanel").classList.toggle("hidden",!show);if(!show)return;
+ let r=state.roomData,show=r?.phase==="event_reveal";setPhaseVisible("revealPanel",!!show);if(!show)return;
  $("eventPanel").classList.remove("hidden");$("selectionWrap").classList.add("hidden");
  let ev=r.currentEvent,rule=SCORE_RULES[ev.no],abilityDie=r.round?.abilityDie,abilityStat=abilityDie?ABILITY_BY_DIE[abilityDie]:null;
  $("abilityResult").classList.toggle("hidden",!rule.randomAbility);
@@ -528,7 +731,7 @@ async function calculateResults(){
  await update(ref(db),u);
 }
 function renderResult(){
- let r=state.roomData,show=r?.phase==="event_result";$("resultPanel").classList.toggle("hidden",!show);if(!show)return;
+ let r=state.roomData,show=r?.phase==="event_result";setPhaseVisible("resultPanel",!!show);if(!show)return;
  $("revealPanel").classList.add("hidden");$("eventPanel").classList.remove("hidden");$("selectionWrap").classList.add("hidden");
  let results=r.round?.results||{};
  let arr=Object.entries(results).map(([id,x])=>({id,...x,p:r.players[id]})).sort((a,b)=>a.rank-b.rank||b.score-a.score);
@@ -586,7 +789,13 @@ async function advanceMonth(){
    const updates={month:next,currentEvent:null,round:null};
    if(RULE_CONFIG.rearrangeMonths.includes(next)){
      updates.phase="rearrangement";
-     for(const id of Object.keys(fresh.players||{}))updates[`players/${id}/rearrangeReady`]=false;
+     for(const [id,p] of Object.entries(fresh.players||{})){
+       if(p.isCPU){
+         const z=cpuInitialZoo(p.area,p.difficulty||"normal");
+         updates[`players/${id}/zoo`]={...z,previousMonthParticipants:p.zoo?.previousMonthParticipants||[]};
+         updates[`players/${id}/rearrangeReady`]=true;
+       }else updates[`players/${id}/rearrangeReady`]=false;
+     }
    }else{
      updates.phase="month_start";
    }
@@ -594,13 +803,13 @@ async function advanceMonth(){
  },700);
 }
 function renderUpkeep(){
- const r=state.roomData,show=r?.phase==="upkeep";$("upkeepPanel").classList.toggle("hidden",!show);if(!show)return;
+ const r=state.roomData,show=r?.phase==="upkeep";setPhaseVisible("upkeepPanel",!!show);if(!show)return;
  const me=my(),up=calculatePlayerUpkeep(me);
  $("upkeepGrid").innerHTML=up.items.map(x=>`<div class="upkeep-card"><b>${x.g==="bench"?"ベンチ":x.g+"番"}：${x.name}</b><div class="meta">基本 ${x.base} × ${x.mult}</div><div style="font-weight:900;margin-top:4px">-${x.cost} pt</div></div>`).join("");
  $("upkeepTotal").textContent=`合計 -${up.total} pt`;
 }
 function renderRearrange(){
- const r=state.roomData,me=my(),show=r?.phase==="rearrangement"; if(!show)state.rearrangeCages=[null,null,null,null,null,null];$("rearrangePanel").classList.toggle("hidden",!show);if(!show)return;
+ const r=state.roomData,me=my(),show=r?.phase==="rearrangement"; if(!show)state.rearrangeCages=[null,null,null,null,null,null];setPhaseVisible("rearrangePanel",!!show);if(!show)return;
  const mp=amap(me.area),all=animals(me.area);
  if(!state.rearrangeCages.some(Boolean)){
    state.rearrangeCages=[1,2,3,4,5,6].map(g=>me.zoo?.cages?.["cage"+g]||null);
@@ -632,17 +841,69 @@ async function confirmRearrange(){
  }
 }
 function renderGameEnd(){
- const r=state.roomData,show=r?.phase==="game_end";$("gameEndPanel").classList.toggle("hidden",!show);if(!show)return;
+ const r=state.roomData,show=r?.phase==="game_end";setPhaseVisible("gameEndPanel",!!show);if(!show)return;
  const arr=Object.entries(r.players||{}).map(([id,p])=>({id,...p})).sort((a,b)=>(b.popularityPoints||0)-(a.popularityPoints||0));
  let rank=0,last=null,count=0;
  $("finalRanking").innerHTML=arr.map(p=>{count++;if(p.popularityPoints!==last){rank=count;last=p.popularityPoints}
  return `<div class="reveal-card"><b>${rank}位　${esc(p.name)}</b><div class="area">${AREAS.find(a=>a.id===p.area)?.label||""}</div><div style="margin-top:8px;font-size:24px;font-weight:1000">${p.popularityPoints||0} pt</div></div>`}).join("");
 }
+
+function playerForArea(area){return Object.entries(state.roomData?.players||{}).find(([,p])=>p.area===area)}
+function renderOthers(){
+ const r=state.roomData,me=my();if(!r||!me?.area)return;
+ const others=AREAS.filter(a=>a.id!==me.area&&playerForArea(a.id));
+ if(!state.otherAreaId||!others.some(a=>a.id===state.otherAreaId))state.otherAreaId=others[0]?.id||null;
+ $("otherAreaTabs").innerHTML=others.map(a=>`<button class="area-tab ${a.id===state.otherAreaId?"active":""}" data-other="${a.id}">${a.label}</button>`).join("");
+ document.querySelectorAll("[data-other]").forEach(b=>b.onclick=()=>{state.otherAreaId=b.dataset.other;renderOthers()});
+ const entry=playerForArea(state.otherAreaId);
+ if(!entry){$("otherAreaContent").innerHTML='<div class="notice">ほかのエリアはありません。</div>';return}
+ const [pid,p]=entry,mp=amap(p.area),prev=p.zoo?.previousMonthParticipants||[];
+ const statCard=(id)=>{
+   const a=mp[id];if(!a)return "-";
+   return `<div class="animal-card"><div class="animal-name">${a.name}</div><div class="stats"><div class="stat">速 ${effectiveStat(p,id,"speed")}</div><div class="stat">力 ${effectiveStat(p,id,"power")}</div><div class="stat">数 ${effectiveStat(p,id,"number")}</div><div class="stat">見 ${effectiveStat(p,id,"looks")}</div><div class="stat">大 ${effectiveStat(p,id,"size")}</div><div class="stat">知 ${effectiveStat(p,id,"intelligence")}</div></div><div class="meta" style="margin-top:6px">飼育料 ${a.upkeep}</div>${prev.includes(id)?'<div class="choice-note">前月出場：全能力 -1</div>':""}</div>`;
+ };
+ $("otherAreaContent").innerHTML=`<div class="zoo-title"><div><h2>${areaObj(p.area)?.label}エリア</h2><div class="meta">${esc(p.name)}${p.isCPU?` ／ CPU・${cpuLevelLabel(p.difficulty)}`:""}</div></div><div class="points">${p.popularityPoints??200} pt</div></div>
+ <h3>ゲージ</h3><div class="other-layout">${[1,2,3,4,5,6].map(g=>{const id=p.zoo?.cages?.["cage"+g];return `<div class="other-cage"><div class="cage-no">${g}番ゲージ${g===1?"・飼育料×3":g===2?"・飼育料×2":""}</div>${statCard(id)}</div>`}).join("")}</div>
+ <h3 style="margin-top:16px">ベンチ</h3><div class="bench">${(p.zoo?.bench||[]).map(id=>`<div class="bench-card">${statCard(id)}</div>`).join("")}</div>`;
+}
+function boardStatus(id,p,r){
+ if(r.phase==="event_selection")return p.eventReady?"準備OK":"選択中";
+ if(r.phase==="event_reveal")return "公開中";
+ if(r.phase==="event_result")return `${r.round?.results?.[id]?.rank||"-"}位`;
+ if(r.phase==="rearrangement")return p.rearrangeReady?"配置OK":"配置換え中";
+ if(r.phase==="initial_setup")return p.setupComplete?"配置OK":"配置中";
+ return phaseLabel(r.phase);
+}
+function renderBoard(){
+ const r=state.roomData;if(!r)return;
+ $("boardMonth").textContent=`${r.month||1}月`;$("boardMultiplier").textContent=`イベント報酬 ×${monthMultiplier(r.month||1)}`;
+ $("boardEvent").innerHTML=`<small>今月のイベント</small><strong>${r.currentEvent?.name||"まだ決まっていません"}</strong>${r.currentEvent?`<div style="font-size:12px;margin-top:5px">${r.currentEvent.method}</div>`:""}`;
+ $("boardGrid").innerHTML=AREAS.map(a=>{
+   const entry=playerForArea(a.id);
+   if(!entry)return `<div class="board-card"><b>${a.label}</b><div class="meta">参加なし</div></div>`;
+   const [id,p]=entry,result=r.round?.results?.[id],status=boardStatus(id,p,r);let extra="";
+   if(r.phase==="event_reveal"){const mp=amap(p.area);extra=`<div class="meta" style="margin-top:6px">${(p.eventSelection||[]).map(x=>mp[x]?.name).filter(Boolean).join(" ＋ ")}</div>`}
+   if(r.phase==="event_result"&&result)extra=`<div style="margin-top:6px;font-weight:900">${result.rank}位 ／ 判定値 ${result.score}</div>`;
+   return `<div class="board-card"><b>${a.label}</b><div>${esc(p.name)}${p.isCPU?'<span class="cpu-badge">CPU</span>':""}</div><div style="font-size:22px;font-weight:1000;margin-top:5px">${p.popularityPoints??200} pt</div><span class="status-pill ${["準備OK","配置OK"].includes(status)?"ok":""}">${status}</span>${extra}</div>`;
+ }).join("");
+}
 async function leaveRoom(){
  let r=state.roomData,code=state.roomCode,pid=state.playerId;if(!r)return;
- if(r.hostPlayerId===pid){let o=Object.entries(r.players||{}).filter(([id])=>id!==pid).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));if(!o.length)await remove(ref(db,`rooms/${code}`));else{let u={};u[`rooms/${code}/hostPlayerId`]=o[0][0];u[`rooms/${code}/players/${pid}`]=null;await update(ref(db),u)}}else await remove(ref(db,`rooms/${code}/players/${pid}`));location.reload();
+ if(r.hostPlayerId===pid){
+   let o=humanEntries(r).filter(([id])=>id!==pid).sort((a,b)=>(a[1].joinedAt||0)-(b[1].joinedAt||0));
+   if(!o.length)await remove(ref(db,`rooms/${code}`));
+   else{let u={};u[`rooms/${code}/hostPlayerId`]=o[0][0];u[`rooms/${code}/players/${pid}`]=null;await update(ref(db),u)}
+ }else await remove(ref(db,`rooms/${code}/players/${pid}`));
+ location.reload();
 }
-$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("assignAreasBtn").onclick=assignAreas;$("startSetupBtn").onclick=startSetup;$("autoSetupBtn").onclick=autoSetup;$("clearSetupBtn").onclick=clearSetup;$("confirmSetupBtn").onclick=confirmSetup;$("drawEventBtn").onclick=drawEvent;$("submitSelectionBtn").onclick=submitSelection;$("revealBtn").onclick=reveal;$("abilityDieBtn").onclick=rollAbilityDie;$("rollScoreDieBtn").onclick=rollScoreDie;$("calculateBtn").onclick=calculateResults;$("advanceMonthBtn").onclick=advanceMonth;$("confirmRearrangeBtn").onclick=confirmRearrange;$("leaveBtn").onclick=leaveRoom;
+
+const eventControlHost=document.createElement("div");
+eventControlHost.className="actions";
+["drawEventBtn","revealBtn","abilityDieBtn","calculateBtn","advanceMonthBtn"].forEach(id=>{const b=$(id);if(b)eventControlHost.appendChild(b)});
+$("eventPanel").appendChild(eventControlHost);
+const rearrangeButton=$("confirmRearrangeBtn");if(rearrangeButton)$("rearrangePanel").appendChild(rearrangeButton);
+
+$("createRoomBtn").onclick=createRoom;$("joinRoomBtn").onclick=joinRoom;$("assignAreasBtn").onclick=assignAreas;$("startSetupBtn").onclick=startSetup;$("autoSetupBtn").onclick=autoSetup;$("clearSetupBtn").onclick=clearSetup;$("confirmSetupBtn").onclick=confirmSetup;$("drawEventBtn").onclick=drawEvent;$("submitSelectionBtn").onclick=submitSelection;$("revealBtn").onclick=reveal;$("abilityDieBtn").onclick=rollAbilityDie;$("rollScoreDieBtn").onclick=rollScoreDie;$("calculateBtn").onclick=calculateResults;$("advanceMonthBtn").onclick=advanceMonth;$("confirmRearrangeBtn").onclick=confirmRearrange;$("leaveBtn").onclick=leaveRoom;$("leaveMenuBtn").onclick=leaveRoom;$("menuBtn").onclick=openMenu;$("closeMenuBtn").onclick=closeMenu;$("drawerBack").onclick=e=>{if(e.target===$("drawerBack"))closeMenu()};document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 $("joinCode").oninput=e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,4);
 </script>
 </body>
